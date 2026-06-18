@@ -3,6 +3,7 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   linux:
@@ -12,7 +13,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Check submodules
+      - name: Bootstrap modules from main
+        run: bash scripts/bootstrap-modules.sh
+
+      - name: Check modules
         run: bash scripts/check-submodules.sh
 
       - name: Build and test all modules
@@ -24,6 +28,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Bootstrap modules from main
+        run: bash scripts/bootstrap-modules.sh
 
       - uses: arduino/setup-arduino-cli@v2
 
