@@ -96,5 +96,3 @@ pypilot-steering-signaling
 ## Current project status
 
 Completed module groups include GPS adapter, WMM/GPSFilter, sensor arbitration, APB/NAV command handling, steering signaling, servo runtime, syslib logging, and cross-module logging integration.
-
-Next mainline work is Phase 3: pilot parity and availability.
