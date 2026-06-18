@@ -6,11 +6,11 @@ Initial pins:
 
 ```text
 pypilot-syslib                fbd2d2d4c358009232d0ac586df2eb9c60c31630
-pypilot-data-model            47f12b0394edcadfcd35e8803dcc1f642a877229
+pypilot-data-model            7cde4cea09a9471eccdefa5bcc733fe0831f448c
 pypilot-servo-protocol        ba5d5ddc938a06ef1d226e575cea6e057ef1a297
 pypilot-client-protocol       af3c23f9cbe4144e21b84ace83a98ba522ad91a0
 pypilot-algorithms            0941a2fb6cb121b018a0081e9c864edfe78675d6
-pypilot-boatimu               abb5f86894eea2cec6bf8fa72e6215f9afa91b96
+pypilot-boatimu               85e502485a207196995cda6da571333e5a162364
 pypilot-nmea0183-connector    699b58031a5496678114417e28dc02cd19d48c66
 pypilot-signalk-connector     185d50b892e5a71a746c1ac4b1c2ff5cd5b552c3
 pypilot-sensors               c32892c8aa9ce85d02d4bd54ec59f9cfb46c93d4
