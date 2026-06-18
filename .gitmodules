@@ -18,6 +18,10 @@
 	path = modules/pypilot-algorithms
 	url = https://github.com/bareboat-necessities/pypilot-algorithms.git
 	branch = main
+[submodule "modules/pypilot-boatimu"]
+	path = modules/pypilot-boatimu
+	url = https://github.com/bareboat-necessities/pypilot-boatimu.git
+	branch = main
 [submodule "modules/pypilot-nmea0183-connector"]
 	path = modules/pypilot-nmea0183-connector
 	url = https://github.com/bareboat-necessities/pypilot-nmea0183-connector.git
