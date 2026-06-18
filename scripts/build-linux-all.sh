@@ -21,7 +21,8 @@ cmake_build_test pypilot-client-protocol
 cmake_build_test pypilot-algorithms \
   -DPYPILOT_SYSLIB_DIR="$M/pypilot-syslib/src"
 
-cmake_build_test pypilot-boatimu
+cmake_build_test pypilot-boatimu \
+  -DPYPILOT_DATA_MODEL_DIR="$M/pypilot-data-model/src"
 
 cmake_build_test pypilot-nmea0183-connector \
   -DPYPILOT_DATA_MODEL_DIR="$M/pypilot-data-model/src"
