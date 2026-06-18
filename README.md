@@ -54,6 +54,7 @@ git commit -m "Update pypilot module pins"
 | `pypilot-servo-protocol` | low-level servo packet protocol |
 | `pypilot-client-protocol` | pypilot client/server protocol |
 | `pypilot-algorithms` | pure math, filters, GPSFilter, WMM, pilot math |
+| `pypilot-boatimu` | backend-neutral BoatIMU / AHRS / heading sample abstraction |
 | `pypilot-nmea0183-connector` | NMEA 0183 parsing and formatting |
 | `pypilot-signalk-connector` | Signal K conversion layer |
 | `pypilot-sensors` | sensor ingestion, source/device arbitration, data-model writes |
@@ -85,6 +86,7 @@ pypilot-data-model
 pypilot-servo-protocol
 pypilot-client-protocol
 pypilot-algorithms
+pypilot-boatimu
 pypilot-nmea0183-connector
 pypilot-signalk-connector
 pypilot-sensors
@@ -95,4 +97,4 @@ pypilot-steering-signaling
 
 ## Current project status
 
-Completed module groups include GPS adapter, WMM/GPSFilter, sensor arbitration, APB/NAV command handling, steering signaling, servo runtime, syslib logging, and cross-module logging integration.
+Completed module groups include GPS adapter, WMM/GPSFilter, BoatIMU sample abstraction, sensor arbitration, APB/NAV command handling, steering signaling, servo runtime, syslib logging, and cross-module logging integration.
