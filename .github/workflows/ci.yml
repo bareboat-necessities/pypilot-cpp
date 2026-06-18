@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Check submodules
+        run: bash scripts/check-submodules.sh
+
+      - name: Build and test all modules
+        run: bash scripts/build-linux-all.sh
+
+  arduino:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: arduino/setup-arduino-cli@v2
+
+      - name: Install AVR core
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+
+      - name: Compile Arduino examples
+        run: bash scripts/build-arduino-all.sh
