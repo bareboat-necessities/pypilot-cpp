@@ -4,6 +4,15 @@ Umbrella repository for the modular C++ pypilot port.
 
 This repository does not duplicate module code. It defines the module set, tracks each module on `main`, bootstraps module checkouts for CI, documents the build graph, and runs Linux and Arduino builds across the full dependency chain.
 
+## Original PyPilot project
+
+This project is a modular C++ port inspired by and based on the original PyPilot project:
+
+- Original repository: https://github.com/pypilot/pypilot
+- Original author: Sean D'Epagnier
+
+Credit and thanks go to Sean D'Epagnier and the PyPilot contributors for the original open-source marine autopilot implementation.
+
 ## Clone
 
 ```bash
