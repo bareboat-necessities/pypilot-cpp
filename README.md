@@ -2,24 +2,33 @@
 
 Umbrella repository for the modular C++ pypilot port.
 
-This repository does not duplicate module code. It pins the current module set as git submodules, documents the build graph, and runs Linux and Arduino builds across the full dependency chain.
+This repository does not duplicate module code. It defines the module set, tracks each module on `main`, bootstraps module checkouts for CI, documents the build graph, and runs Linux and Arduino builds across the full dependency chain.
 
 ## Clone
 
 ```bash
-git clone --recurse-submodules https://github.com/bareboat-necessities/pypilot-cpp.git
+git clone https://github.com/bareboat-necessities/pypilot-cpp.git
 cd pypilot-cpp
+bash scripts/bootstrap-modules.sh
 ```
 
-For an already-cloned tree:
+If true gitlink submodules are later committed, this also works:
 
 ```bash
+git clone --recurse-submodules https://github.com/bareboat-necessities/pypilot-cpp.git
+cd pypilot-cpp
 git submodule update --init --recursive
 ```
 
 ## Updating modules to latest main
 
-Each submodule tracks `main` in `.gitmodules`, but this root repository still pins exact commits for reproducible builds.
+Each module tracks `main`. CI bootstraps fresh module checkouts with `scripts/bootstrap-modules.sh`.
+
+```bash
+bash scripts/bootstrap-modules.sh
+```
+
+For a future gitlink submodule tree:
 
 ```bash
 git submodule update --remote --recursive
@@ -46,13 +55,15 @@ git commit -m "Update pypilot module pins"
 ## Linux build
 
 ```bash
-./scripts/build-linux-all.sh
+bash scripts/bootstrap-modules.sh
+bash scripts/build-linux-all.sh
 ```
 
 ## Arduino build
 
 ```bash
-./scripts/build-arduino-all.sh
+bash scripts/bootstrap-modules.sh
+bash scripts/build-arduino-all.sh
 ```
 
 The Arduino build script targets `arduino:avr:mega` by default because it is a broad AVR compile target for CI.
