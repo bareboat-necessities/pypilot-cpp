@@ -1,0 +1,44 @@
+[submodule "modules/pypilot-syslib"]
+	path = modules/pypilot-syslib
+	url = https://github.com/bareboat-necessities/pypilot-syslib.git
+	branch = main
+[submodule "modules/pypilot-data-model"]
+	path = modules/pypilot-data-model
+	url = https://github.com/bareboat-necessities/pypilot-data-model.git
+	branch = main
+[submodule "modules/pypilot-servo-protocol"]
+	path = modules/pypilot-servo-protocol
+	url = https://github.com/bareboat-necessities/pypilot-servo-protocol.git
+	branch = main
+[submodule "modules/pypilot-client-protocol"]
+	path = modules/pypilot-client-protocol
+	url = https://github.com/bareboat-necessities/pypilot-client-protocol.git
+	branch = main
+[submodule "modules/pypilot-algorithms"]
+	path = modules/pypilot-algorithms
+	url = https://github.com/bareboat-necessities/pypilot-algorithms.git
+	branch = main
+[submodule "modules/pypilot-nmea0183-connector"]
+	path = modules/pypilot-nmea0183-connector
+	url = https://github.com/bareboat-necessities/pypilot-nmea0183-connector.git
+	branch = main
+[submodule "modules/pypilot-signalk-connector"]
+	path = modules/pypilot-signalk-connector
+	url = https://github.com/bareboat-necessities/pypilot-signalk-connector.git
+	branch = main
+[submodule "modules/pypilot-sensors"]
+	path = modules/pypilot-sensors
+	url = https://github.com/bareboat-necessities/pypilot-sensors.git
+	branch = main
+[submodule "modules/pypilot-gps-adapter"]
+	path = modules/pypilot-gps-adapter
+	url = https://github.com/bareboat-necessities/pypilot-gps-adapter.git
+	branch = main
+[submodule "modules/pypilot-pilots-logic"]
+	path = modules/pypilot-pilots-logic
+	url = https://github.com/bareboat-necessities/pypilot-pilots-logic.git
+	branch = main
+[submodule "modules/pypilot-steering-signaling"]
+	path = modules/pypilot-steering-signaling
+	url = https://github.com/bareboat-necessities/pypilot-steering-signaling.git
+	branch = main
