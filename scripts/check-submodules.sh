@@ -3,6 +3,7 @@ set -euo pipefail
 
 git submodule status --recursive
 
+test -d modules/pypilot-event-loop
 test -d modules/pypilot-syslib
 test -d modules/pypilot-data-model
 test -d modules/pypilot-servo-protocol
