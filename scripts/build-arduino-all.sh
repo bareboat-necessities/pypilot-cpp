@@ -31,6 +31,7 @@ arduino_compile() {
 }
 
 arduino_compile "$M/pypilot-event-loop/examples/arduino/EventLoopSmoke"
+arduino_compile "$M/pypilot-event-loop/examples/arduino/SerialByteStreamEcho"
 arduino_compile "$M/pypilot-syslib/examples/arduino/SyslibLoggingExample"
 arduino_compile "$M/pypilot-data-model/examples/arduino/DataModelExample"
 arduino_compile "$M/pypilot-algorithms/examples/arduino/AlgorithmsExample"
