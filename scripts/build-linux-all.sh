@@ -13,6 +13,7 @@ cmake_build_test() {
   ctest --test-dir "$B/$name" --output-on-failure
 }
 
+cmake_build_test pypilot-event-loop
 cmake_build_test pypilot-syslib
 cmake_build_test pypilot-data-model
 cmake_build_test pypilot-servo-protocol
