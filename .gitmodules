@@ -1,3 +1,7 @@
+[submodule "modules/pypilot-event-loop"]
+	path = modules/pypilot-event-loop
+	url = https://github.com/bareboat-necessities/pypilot-event-loop.git
+	branch = main
 [submodule "modules/pypilot-syslib"]
 	path = modules/pypilot-syslib
 	url = https://github.com/bareboat-necessities/pypilot-syslib.git
