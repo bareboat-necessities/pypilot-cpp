@@ -6,6 +6,7 @@ M="$ROOT/modules"
 FQBN="${PYPILOT_ARDUINO_FQBN:-arduino:avr:mega}"
 
 COMMON_LIBS=(
+  --libraries "$M/pypilot-event-loop"
   --libraries "$M/pypilot-syslib"
   --libraries "$M/pypilot-data-model"
   --libraries "$M/pypilot-servo-protocol"
@@ -29,6 +30,7 @@ arduino_compile() {
   fi
 }
 
+arduino_compile "$M/pypilot-event-loop/examples/arduino/EventLoopSmoke"
 arduino_compile "$M/pypilot-syslib/examples/arduino/SyslibLoggingExample"
 arduino_compile "$M/pypilot-data-model/examples/arduino/DataModelExample"
 arduino_compile "$M/pypilot-algorithms/examples/arduino/AlgorithmsExample"
