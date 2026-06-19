@@ -30,11 +30,10 @@ arduino_compile() {
   fi
 }
 
-arduino_compile "$M/pypilot-event-loop/examples/arduino/EventLoopSmoke"
-arduino_compile "$M/pypilot-event-loop/examples/arduino/SerialByteStreamEcho"
-arduino_compile "$M/pypilot-event-loop/examples/arduino/DatagramStreamExample"
-arduino_compile "$M/pypilot-event-loop/examples/arduino/PinEventExample"
-arduino_compile "$M/pypilot-event-loop/examples/arduino/InterruptPinEventExample"
+arduino_compile "$M/pypilot-event-loop/examples/EventLoopTimerExample"
+arduino_compile "$M/pypilot-event-loop/examples/LineProtocolExample"
+arduino_compile "$M/pypilot-event-loop/examples/FixedHeaderProtocolExample"
+arduino_compile "$M/pypilot-event-loop/examples/PinEventExample"
 arduino_compile "$M/pypilot-syslib/examples/arduino/SyslibLoggingExample"
 arduino_compile "$M/pypilot-data-model/examples/arduino/DataModelExample"
 arduino_compile "$M/pypilot-algorithms/examples/arduino/AlgorithmsExample"
