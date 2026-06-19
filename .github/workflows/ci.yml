@@ -16,7 +16,7 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libevent-dev pkg-config
+          sudo apt-get install -y libevent-dev libgpiod-dev pkg-config
 
       - name: Bootstrap modules from main
         run: bash scripts/bootstrap-modules.sh
