@@ -49,6 +49,7 @@ git commit -m "Update pypilot module pins"
 
 | Module | Role |
 | --- | --- |
+| `pypilot-event-loop` | portable task/timer/stream scheduling with Linux libevent backend |
 | `pypilot-syslib` | shared system helpers and logging |
 | `pypilot-data-model` | shared pypilot data model |
 | `pypilot-servo-protocol` | low-level servo packet protocol |
@@ -69,6 +70,8 @@ bash scripts/bootstrap-modules.sh
 bash scripts/build-linux-all.sh
 ```
 
+The Linux CI installs `libevent-dev` because `pypilot-event-loop` uses libevent as the only Linux backend.
+
 ## Arduino build
 
 ```bash
@@ -81,6 +84,7 @@ The Arduino build script targets `arduino:avr:mega` by default because it is a b
 ## Dependency order
 
 ```text
+pypilot-event-loop
 pypilot-syslib
 pypilot-data-model
 pypilot-servo-protocol
@@ -97,4 +101,4 @@ pypilot-steering-signaling
 
 ## Current project status
 
-Completed module groups include GPS adapter, WMM/GPSFilter, BoatIMU sample abstraction, sensor arbitration, APB/NAV command handling, steering signaling, servo runtime, syslib logging, and cross-module logging integration.
+Completed module groups include GPS adapter, WMM/GPSFilter, BoatIMU sample abstraction, sensor arbitration, APB/NAV command handling, steering signaling, servo runtime, syslib logging, event-loop Linux/libevent phase, and cross-module logging integration.
