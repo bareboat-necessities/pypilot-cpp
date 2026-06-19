@@ -5,7 +5,7 @@ All submodules track `main` in `.gitmodules`; this super-repo pins exact commits
 Initial pins:
 
 ```text
-pypilot-event-loop           e9bbc638adcd2a9cff16d17ac77a5045e6c752e8
+pypilot-event-loop           43247e3181e71f32d6523551235f189c84e8054b
 pypilot-syslib               fbd2d2d4c358009232d0ac586df2eb9c60c31630
 pypilot-data-model           7cde4cea09a9471eccdefa5bcc733fe0831f448c
 pypilot-servo-protocol       ba5d5ddc938a06ef1d226e575cea6e057ef1a297
