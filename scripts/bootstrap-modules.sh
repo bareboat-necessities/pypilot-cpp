@@ -22,6 +22,7 @@ clone_or_update() {
   fi
 }
 
+clone_or_update pypilot-event-loop
 clone_or_update pypilot-syslib
 clone_or_update pypilot-data-model
 clone_or_update pypilot-servo-protocol
