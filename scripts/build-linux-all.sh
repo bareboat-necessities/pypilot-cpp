@@ -47,6 +47,9 @@ cmake_build_test pypilot-data-model
 cmake_build_test pypilot-servo-protocol
 cmake_build_test pypilot-client-protocol
 
+cmake_build_test pypilot-runtime \
+  -DPYPILOT_EVENT_LOOP_DIR="$M/pypilot-event-loop"
+
 cmake_build_test pypilot-algorithms \
   -DPYPILOT_SYSLIB_DIR="$M/pypilot-syslib/src"
 
