@@ -10,7 +10,7 @@ clone_or_update() {
   local url="https://github.com/bareboat-necessities/${name}.git"
   local dir="$M/$name"
 
-  if [ -d "$dir/.git" ]; then
+  if git -C "$dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     echo "Updating $name"
     git -C "$dir" fetch --depth 1 origin main
     git -C "$dir" checkout main
@@ -20,6 +20,8 @@ clone_or_update() {
     rm -rf "$dir"
     git clone --depth 1 --branch main "$url" "$dir"
   fi
+
+  echo "$name -> $(git -C "$dir" rev-parse --short=12 HEAD)"
 }
 
 clone_or_update pypilot-event-loop
