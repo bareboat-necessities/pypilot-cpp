@@ -4,20 +4,42 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 M="$ROOT/modules"
 B="$ROOT/build"
-
-refresh_event_loop_module() {
-  git -C "$ROOT" submodule update --init --remote modules/pypilot-event-loop
-}
+TOTAL_TESTS=0
 
 cmake_build_test() {
   local name="$1"
   shift
-  cmake -S "$M/$name" -B "$B/$name" "$@"
-  cmake --build "$B/$name" --parallel
-  ctest --test-dir "$B/$name" --output-on-failure
+  local source_dir="$M/$name"
+  local build_dir="$B/$name"
+
+  echo "::group::Build and test $name"
+  test -d "$source_dir"
+  test -f "$source_dir/CMakeLists.txt"
+
+  cmake -S "$source_dir" -B "$build_dir" "$@"
+  cmake --build "$build_dir" --parallel
+
+  echo "Registered tests for $name:"
+  ctest --test-dir "$build_dir" -N
+
+  local test_count
+  test_count="$(ctest --test-dir "$build_dir" -N | awk '/Total Tests:/ {print $3}')"
+  if [ -z "$test_count" ]; then
+    echo "Could not determine CTest count for $name" >&2
+    exit 1
+  fi
+  if [ "$test_count" -le 0 ]; then
+    echo "$name registered zero CTest tests" >&2
+    exit 1
+  fi
+
+  TOTAL_TESTS=$((TOTAL_TESTS + test_count))
+  ctest --test-dir "$build_dir" --output-on-failure
+  echo "::endgroup::"
 }
 
-refresh_event_loop_module
+bash "$ROOT/scripts/bootstrap-modules.sh"
+bash "$ROOT/scripts/check-submodules.sh"
 
 cmake_build_test pypilot-event-loop
 cmake_build_test pypilot-syslib
@@ -60,3 +82,5 @@ cmake_build_test pypilot-pilots-logic \
 cmake_build_test pypilot-steering-signaling \
   -DPYPILOT_SERVO_PROTOCOL_DIR="$M/pypilot-servo-protocol" \
   -DPYPILOT_SYSLIB_DIR="$M/pypilot-syslib"
+
+echo "Total registered module CTest tests: $TOTAL_TESTS"
