@@ -18,6 +18,7 @@ modules=(
   pypilot-gps-adapter
   pypilot-pilots-logic
   pypilot-steering-signaling
+  pypilot-runtime
 )
 
 git -C "$ROOT" submodule status --recursive || true
