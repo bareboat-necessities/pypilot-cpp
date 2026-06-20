@@ -19,6 +19,7 @@ COMMON_LIBS=(
   --libraries "$M/pypilot-gps-adapter"
   --libraries "$M/pypilot-pilots-logic"
   --libraries "$M/pypilot-steering-signaling"
+  --libraries "$M/pypilot-runtime"
 )
 
 arduino_compile() {
@@ -47,3 +48,9 @@ arduino_compile "$M/pypilot-sensors/examples/arduino/SensorsExample"
 arduino_compile "$M/pypilot-gps-adapter/examples/arduino/GpsAdapterExample"
 arduino_compile "$M/pypilot-pilots-logic/examples/arduino/PilotsLogicExample"
 arduino_compile "$M/pypilot-steering-signaling/examples/arduino/SteeringExample"
+
+if [[ "$FQBN" == esp32:* ]]; then
+  arduino_compile "$M/pypilot-runtime/examples/RuntimeServerExample"
+else
+  echo "Skipping pypilot-runtime RuntimeServerExample for non-ESP32 target: $FQBN"
+fi
