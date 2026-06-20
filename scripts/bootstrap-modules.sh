@@ -37,5 +37,6 @@ clone_or_update pypilot-sensors
 clone_or_update pypilot-gps-adapter
 clone_or_update pypilot-pilots-logic
 clone_or_update pypilot-steering-signaling
+clone_or_update pypilot-runtime
 
 git -C "$ROOT" status --short
