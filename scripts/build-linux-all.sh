@@ -5,6 +5,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 M="$ROOT/modules"
 B="$ROOT/build"
 
+refresh_event_loop_module() {
+  git -C "$ROOT" submodule update --init --remote modules/pypilot-event-loop
+}
+
 cmake_build_test() {
   local name="$1"
   shift
@@ -12,6 +16,8 @@ cmake_build_test() {
   cmake --build "$B/$name" --parallel
   ctest --test-dir "$B/$name" --output-on-failure
 }
+
+refresh_event_loop_module
 
 cmake_build_test pypilot-event-loop
 cmake_build_test pypilot-syslib
