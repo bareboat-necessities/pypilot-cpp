@@ -5,10 +5,6 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 M="$ROOT/modules"
 FQBN="${PYPILOT_ARDUINO_FQBN:-arduino:avr:mega}"
 
-refresh_event_loop_module() {
-  git -C "$ROOT" submodule update --init --remote modules/pypilot-event-loop
-}
-
 COMMON_LIBS=(
   --libraries "$M/pypilot-event-loop"
   --libraries "$M/pypilot-syslib"
@@ -28,13 +24,16 @@ COMMON_LIBS=(
 arduino_compile() {
   local sketch="$1"
   if [ -d "$sketch" ]; then
+    echo "::group::Arduino compile $sketch"
     arduino-cli compile --fqbn "$FQBN" "${COMMON_LIBS[@]}" "$sketch"
+    echo "::endgroup::"
   else
     echo "Skipping missing Arduino sketch: $sketch"
   fi
 }
 
-refresh_event_loop_module
+bash "$ROOT/scripts/bootstrap-modules.sh"
+bash "$ROOT/scripts/check-submodules.sh"
 
 arduino_compile "$M/pypilot-event-loop/examples/EventLoopTimerExample"
 arduino_compile "$M/pypilot-event-loop/examples/LineProtocolExample"
