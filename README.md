@@ -50,11 +50,12 @@ git commit -m "Update pypilot module pins"
 | Module | Role |
 | --- | --- |
 | `pypilot-event-loop` | portable task/timer/stream scheduling with Linux libevent backend |
+| `pypilot-settings` | descriptor validation and persistent settings stores, including memory, Linux file, and ESP32 NVS backends |
 | `pypilot-syslib` | shared system helpers and logging |
 | `pypilot-data-model` | shared pypilot data model |
 | `pypilot-servo-protocol` | low-level servo packet protocol |
 | `pypilot-client-protocol` | pypilot client/server protocol |
-| `pypilot-runtime` | typed runtime values, pypilot TCP server, periodic watches, and client helper |
+| `pypilot-runtime` | typed runtime values, pypilot TCP server, periodic watches, client helper, and optional settings bridge |
 | `pypilot-algorithms` | pure math, filters, GPSFilter, WMM, pilot math |
 | `pypilot-boatimu` | backend-neutral BoatIMU / AHRS / heading sample abstraction |
 | `pypilot-nmea0183-connector` | NMEA 0183 parsing and formatting |
@@ -71,7 +72,7 @@ bash scripts/bootstrap-modules.sh
 bash scripts/build-linux-all.sh
 ```
 
-The Linux CI installs `libevent-dev` because `pypilot-event-loop` uses libevent as the only Linux backend. The Linux umbrella build also builds and tests `pypilot-runtime` after `pypilot-event-loop`.
+The Linux CI installs `libevent-dev` because `pypilot-event-loop` uses libevent as the only Linux backend. The Linux umbrella build also builds and tests `pypilot-settings` and builds `pypilot-runtime` with the settings bridge enabled.
 
 ## Arduino build
 
@@ -80,12 +81,13 @@ bash scripts/bootstrap-modules.sh
 bash scripts/build-arduino-all.sh
 ```
 
-The Arduino build script targets `arduino:avr:mega` by default because it is a broad AVR compile target for CI. `pypilot-runtime` is included as an Arduino library, and its runtime server example is compiled only for ESP32-family targets because it uses the WiFi TCP backend.
+The Arduino build script targets `arduino:avr:mega` by default because it is a broad AVR compile target for CI. `pypilot-settings` is included as an Arduino library. `pypilot-runtime` is included as an Arduino library, and its runtime server example is compiled only for ESP32-family targets because it uses the WiFi TCP backend.
 
 ## Dependency order
 
 ```text
 pypilot-event-loop
+pypilot-settings
 pypilot-syslib
 pypilot-data-model
 pypilot-servo-protocol
@@ -103,4 +105,4 @@ pypilot-steering-signaling
 
 ## Current project status
 
-Completed module groups include GPS adapter, WMM/GPSFilter, BoatIMU sample abstraction, sensor arbitration, APB/NAV command handling, steering signaling, servo runtime, syslib logging, event-loop Linux/libevent phase, cross-module logging integration, and the initial `pypilot-runtime` typed TCP/value layer.
+Completed module groups include GPS adapter, WMM/GPSFilter, BoatIMU sample abstraction, sensor arbitration, APB/NAV command handling, steering signaling, servo runtime, syslib logging, event-loop Linux/libevent phase, settings persistence backends, cross-module logging integration, and the initial `pypilot-runtime` typed TCP/value layer with settings bridge.
