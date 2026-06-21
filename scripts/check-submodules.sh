@@ -7,6 +7,7 @@ M="$ROOT/modules"
 modules=(
   pypilot-event-loop
   pypilot-settings
+  pypilot-mdns
   pypilot-syslib
   pypilot-data-model
   pypilot-servo-protocol
