@@ -72,6 +72,7 @@ cmake_build_test pypilot-sensors \
   -DPYPILOT_ALGORITHMS_DIR="$M/pypilot-algorithms/src" \
   -DPYPILOT_NMEA0183_CONNECTOR_DIR="$M/pypilot-nmea0183-connector/src" \
   -DPYPILOT_SIGNALK_CONNECTOR_DIR="$M/pypilot-signalk-connector/src" \
+  -DPYPILOT_MDNS_DIR="$M/pypilot-mdns/src" \
   -DPYPILOT_SERVO_PROTOCOL_DIR="$M/pypilot-servo-protocol/src" \
   -DPYPILOT_SYSLIB_DIR="$M/pypilot-syslib/src"
 
