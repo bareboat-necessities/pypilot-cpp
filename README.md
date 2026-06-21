@@ -54,6 +54,7 @@ git commit -m "Update pypilot module pins"
 | `pypilot-data-model` | shared pypilot data model |
 | `pypilot-servo-protocol` | low-level servo packet protocol |
 | `pypilot-client-protocol` | pypilot client/server protocol |
+| `pypilot-runtime` | typed runtime values, pypilot TCP server, periodic watches, and client helper |
 | `pypilot-algorithms` | pure math, filters, GPSFilter, WMM, pilot math |
 | `pypilot-boatimu` | backend-neutral BoatIMU / AHRS / heading sample abstraction |
 | `pypilot-nmea0183-connector` | NMEA 0183 parsing and formatting |
@@ -70,7 +71,7 @@ bash scripts/bootstrap-modules.sh
 bash scripts/build-linux-all.sh
 ```
 
-The Linux CI installs `libevent-dev` because `pypilot-event-loop` uses libevent as the only Linux backend.
+The Linux CI installs `libevent-dev` because `pypilot-event-loop` uses libevent as the only Linux backend. The Linux umbrella build also builds and tests `pypilot-runtime` after `pypilot-event-loop`.
 
 ## Arduino build
 
@@ -79,7 +80,7 @@ bash scripts/bootstrap-modules.sh
 bash scripts/build-arduino-all.sh
 ```
 
-The Arduino build script targets `arduino:avr:mega` by default because it is a broad AVR compile target for CI.
+The Arduino build script targets `arduino:avr:mega` by default because it is a broad AVR compile target for CI. `pypilot-runtime` is included as an Arduino library, and its runtime server example is compiled only for ESP32-family targets because it uses the WiFi TCP backend.
 
 ## Dependency order
 
@@ -89,6 +90,7 @@ pypilot-syslib
 pypilot-data-model
 pypilot-servo-protocol
 pypilot-client-protocol
+pypilot-runtime
 pypilot-algorithms
 pypilot-boatimu
 pypilot-nmea0183-connector
@@ -101,4 +103,4 @@ pypilot-steering-signaling
 
 ## Current project status
 
-Completed module groups include GPS adapter, WMM/GPSFilter, BoatIMU sample abstraction, sensor arbitration, APB/NAV command handling, steering signaling, servo runtime, syslib logging, event-loop Linux/libevent phase, and cross-module logging integration.
+Completed module groups include GPS adapter, WMM/GPSFilter, BoatIMU sample abstraction, sensor arbitration, APB/NAV command handling, steering signaling, servo runtime, syslib logging, event-loop Linux/libevent phase, cross-module logging integration, and the initial `pypilot-runtime` typed TCP/value layer.
