@@ -6,6 +6,7 @@ M="$ROOT/modules"
 
 modules=(
   pypilot-event-loop
+  pypilot-settings
   pypilot-syslib
   pypilot-data-model
   pypilot-servo-protocol
@@ -20,8 +21,6 @@ modules=(
   pypilot-steering-signaling
   pypilot-runtime
 )
-
-git -C "$ROOT" submodule status --recursive || true
 
 for name in "${modules[@]}"; do
   dir="$M/$name"
