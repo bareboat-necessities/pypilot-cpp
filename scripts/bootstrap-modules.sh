@@ -26,6 +26,7 @@ clone_or_update() {
 
 clone_or_update pypilot-event-loop
 clone_or_update pypilot-settings
+clone_or_update pypilot-mdns
 clone_or_update pypilot-syslib
 clone_or_update pypilot-data-model
 clone_or_update pypilot-servo-protocol
