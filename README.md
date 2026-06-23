@@ -59,6 +59,7 @@ git commit -m "Update pypilot module pins"
 | `pypilot-runtime` | typed runtime values, pypilot TCP server, periodic watches, client helper, settings bridge, and mDNS helper |
 | `pypilot-algorithms` | pure math, filters, GPSFilter, WMM, pilot math |
 | `pypilot-boatimu` | backend-neutral BoatIMU / AHRS / heading sample abstraction |
+| `ocean-imu` | checkout-only header/source library for marine IMU/AHRS/INS algorithms; not built or tested by this umbrella CI |
 | `pypilot-nmea0183-connector` | NMEA 0183 parsing and formatting |
 | `pypilot-signalk-connector` | Signal K conversion layer and Signal K mDNS discovery helper |
 | `pypilot-sensors` | sensor ingestion, source/device arbitration, data-model writes |
@@ -75,6 +76,8 @@ bash scripts/build-linux-all.sh
 
 The Linux CI installs `libevent-dev` because `pypilot-event-loop` uses libevent as the Linux backend. The Linux umbrella build also builds and tests `pypilot-settings`, `pypilot-mdns`, `pypilot-runtime` with settings and mDNS enabled, and `pypilot-signalk-connector` with Signal K mDNS discovery enabled.
 
+`ocean-imu` is bootstrapped and checked out for future BoatIMU/AHRS integration, but it is intentionally excluded from the umbrella Linux build and test script. Build or test `ocean-imu` from its own repository when needed.
+
 ## Arduino build
 
 ```bash
@@ -83,6 +86,8 @@ bash scripts/build-arduino-all.sh
 ```
 
 The Arduino build script targets `arduino:avr:mega` by default because it is a broad AVR compile target for CI. `pypilot-settings` is included as an Arduino library. `pypilot-mdns` and runtime server examples are compiled only for ESP32-family targets because they use ESP32 networking / mDNS support.
+
+`ocean-imu` is not passed to `arduino-cli` by the umbrella Arduino build. ESP32-S3 sketches that use `ocean-imu` should include it explicitly when those integrations are added.
 
 ## Dependency order
 
@@ -97,6 +102,7 @@ pypilot-client-protocol
 pypilot-runtime
 pypilot-algorithms
 pypilot-boatimu
+ocean-imu
 pypilot-nmea0183-connector
 pypilot-signalk-connector
 pypilot-sensors
@@ -105,7 +111,7 @@ pypilot-pilots-logic
 pypilot-steering-signaling
 ```
 
-`pypilot-runtime` optionally consumes `pypilot-settings` and `pypilot-mdns` when those sibling checkouts are present. `pypilot-signalk-connector` depends on `pypilot-mdns` for Signal K discovery.
+`pypilot-runtime` optionally consumes `pypilot-settings` and `pypilot-mdns` when those sibling checkouts are present. `pypilot-signalk-connector` depends on `pypilot-mdns` for Signal K discovery. `ocean-imu` is a checkout-only dependency for future BoatIMU/AHRS integration and is not part of the current umbrella build graph.
 
 ## Current project status
 
