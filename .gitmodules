@@ -38,6 +38,10 @@
 	path = modules/pypilot-boatimu
 	url = https://github.com/bareboat-necessities/pypilot-boatimu.git
 	branch = main
+[submodule "modules/ocean-imu"]
+	path = modules/ocean-imu
+	url = https://github.com/bareboat-necessities/ocean-imu.git
+	branch = main
 [submodule "modules/pypilot-nmea0183-connector"]
 	path = modules/pypilot-nmea0183-connector
 	url = https://github.com/bareboat-necessities/pypilot-nmea0183-connector.git
