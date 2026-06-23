@@ -2,60 +2,72 @@
 
 #include <stdint.h>
 
+#if defined(ARDUINO) && defined(ESP32)
+#ifndef PYPILOT_EVENT_LOOP_ENABLE_ARDUINO_WIFI_TCP
+#define PYPILOT_EVENT_LOOP_ENABLE_ARDUINO_WIFI_TCP 1
+#endif
+#ifndef PYPILOT_EVENT_LOOP_ENABLE_ARDUINO_WIFI_UDP
+#define PYPILOT_EVENT_LOOP_ENABLE_ARDUINO_WIFI_UDP 1
+#endif
+#endif
+
+#include <pypilot_event_loop.hpp>
+#include <pypilot_runtime.hpp>
+
 namespace pypilot {
 
-struct BoatImuSample {
-    uint64_t timestamp_us;
-    float heading_deg;
-    float heading_rate_deg_s;
-    bool valid;
-
-    BoatImuSample()
-        : timestamp_us(0), heading_deg(0.0f), heading_rate_deg_s(0.0f), valid(false) {}
-};
+using PypilotEventLoop = pypilot_event_loop::EventLoop<128, 96>;
 
 class IBoatImuBackend {
 public:
     virtual ~IBoatImuBackend() {}
-    virtual bool read_sample(BoatImuSample& out) = 0;
+    virtual bool poll(pypilot_runtime::PypilotRuntimeState& runtime, uint64_t now_us) = 0;
 };
 
 class IServoBackend {
 public:
     virtual ~IServoBackend() {}
-    virtual void disable(uint64_t now_us) = 0;
-    virtual bool write_normalized(float command, uint64_t now_us) = 0;
+    virtual void disable(pypilot_runtime::PypilotRuntimeState& runtime, uint64_t now_us) = 0;
+    virtual bool apply(pypilot_runtime::PypilotRuntimeState& runtime, uint64_t now_us) = 0;
 };
 
 struct PypilotAppConfig {
-    uint32_t loop_period_us;
-    float max_abs_command;
+    const char* runtime_host;
+    uint16_t runtime_port;
+    uint16_t runtime_udp_watch_port;
+    uint32_t control_period_us;
+    size_t max_runtime_output_bytes;
+    bool enable_runtime_tcp;
 
     PypilotAppConfig()
-        : loop_period_us(50000u), max_abs_command(1.0f) {}
+        : runtime_host("0.0.0.0"),
+          runtime_port(23322),
+          runtime_udp_watch_port(0),
+          control_period_us(50000u),
+          max_runtime_output_bytes(32768u),
+          enable_runtime_tcp(true) {}
 };
 
 enum class PypilotAppState : uint8_t {
     stopped,
-    disabled,
-    enabled,
+    running,
     fault
 };
 
 struct PypilotAppStatus {
     PypilotAppState state;
-    uint64_t last_tick_us;
-    uint32_t ticks;
-    bool imu_seen;
-    bool servo_seen;
+    bool runtime_listening;
+    uint16_t runtime_port;
+    uint64_t last_control_tick_us;
+    uint32_t control_ticks;
     const char* fault;
 
     PypilotAppStatus()
         : state(PypilotAppState::stopped),
-          last_tick_us(0),
-          ticks(0),
-          imu_seen(false),
-          servo_seen(false),
+          runtime_listening(false),
+          runtime_port(0),
+          last_control_tick_us(0),
+          control_ticks(0),
           fault("") {}
 };
 
@@ -63,26 +75,42 @@ class PypilotApp {
 public:
     PypilotApp();
 
-    bool begin(IBoatImuBackend& imu, IServoBackend& servo, const PypilotAppConfig& config = PypilotAppConfig());
-    void stop(uint64_t now_us);
-    void tick(uint64_t now_us);
+    bool begin(IBoatImuBackend* imu_backend, IServoBackend* servo_backend, const PypilotAppConfig& config = PypilotAppConfig());
+    void tick();
+    void run_forever();
+    void request_exit();
+    void stop();
 
-    bool set_enabled(bool enabled, uint64_t now_us);
-    void set_servo_command(float normalized_command);
-
+    PypilotEventLoop& loop() { return loop_; }
     const PypilotAppStatus& status() const { return status_; }
-    float servo_command() const { return servo_command_; }
+
+    pypilot_runtime::PypilotRuntimeState& runtime_state() { return runtime_state_; }
+    pypilot_runtime::PypilotRuntimeProtocol& runtime_protocol() { return runtime_protocol_; }
 
 private:
-    float clamp_command(float command) const;
-    void set_fault(const char* message, uint64_t now_us);
+    void control_tick();
+    bool start_runtime_server();
+    void set_fault(const char* message);
+    void publish_runtime();
 
-    IBoatImuBackend* imu_;
-    IServoBackend* servo_;
+    PypilotEventLoop loop_;
+
+    pypilot_runtime::AutopilotValues autopilot_values_;
+    pypilot_runtime::BoatImuValues boatimu_values_;
+    pypilot_runtime::SensorValues sensor_values_;
+    pypilot_runtime::ServoValues servo_values_;
+    pypilot_runtime::PilotValues pilot_values_;
+    pypilot_runtime::GpsValues gps_values_;
+    pypilot_runtime::WindValues wind_values_;
+    pypilot_runtime::PypilotRuntimeState runtime_state_;
+    pypilot_runtime::PypilotRuntimeProtocol runtime_protocol_;
+    pypilot_runtime::PypilotRuntimeServer<8, 16> runtime_server_;
+
+    IBoatImuBackend* imu_backend_;
+    IServoBackend* servo_backend_;
     PypilotAppConfig config_;
     PypilotAppStatus status_;
-    uint64_t next_tick_us_;
-    float servo_command_;
+    pypilot_event_loop::EventHandle control_tick_handle_;
 };
 
 } // namespace pypilot
