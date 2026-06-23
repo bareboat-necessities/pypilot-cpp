@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 #if defined(ARDUINO) && defined(ESP32)
@@ -17,6 +18,7 @@
 namespace pypilot {
 
 using PypilotEventLoop = pypilot_event_loop::EventLoop<128, 96>;
+using PypilotRuntimeService = pypilot_runtime::PypilotRuntimeService<PypilotEventLoop, 8, 16>;
 
 class IBoatImuBackend {
 public:
@@ -35,6 +37,7 @@ struct PypilotAppConfig {
     const char* runtime_host;
     uint16_t runtime_port;
     uint16_t runtime_udp_watch_port;
+    uint32_t runtime_publish_period_us;
     uint32_t control_period_us;
     size_t max_runtime_output_bytes;
     bool enable_runtime_tcp;
@@ -43,6 +46,7 @@ struct PypilotAppConfig {
         : runtime_host("0.0.0.0"),
           runtime_port(23322),
           runtime_udp_watch_port(0),
+          runtime_publish_period_us(50000u),
           control_period_us(50000u),
           max_runtime_output_bytes(32768u),
           enable_runtime_tcp(true) {}
@@ -82,29 +86,17 @@ public:
     void stop();
 
     PypilotEventLoop& loop() { return loop_; }
+    PypilotRuntimeService& runtime() { return runtime_; }
+    pypilot_runtime::PypilotRuntimeState& runtime_state() { return runtime_.state(); }
     const PypilotAppStatus& status() const { return status_; }
-
-    pypilot_runtime::PypilotRuntimeState& runtime_state() { return runtime_state_; }
-    pypilot_runtime::PypilotRuntimeProtocol& runtime_protocol() { return runtime_protocol_; }
 
 private:
     void control_tick();
-    bool start_runtime_server();
     void set_fault(const char* message);
     void publish_runtime();
 
     PypilotEventLoop loop_;
-
-    pypilot_runtime::AutopilotValues autopilot_values_;
-    pypilot_runtime::BoatImuValues boatimu_values_;
-    pypilot_runtime::SensorValues sensor_values_;
-    pypilot_runtime::ServoValues servo_values_;
-    pypilot_runtime::PilotValues pilot_values_;
-    pypilot_runtime::GpsValues gps_values_;
-    pypilot_runtime::WindValues wind_values_;
-    pypilot_runtime::PypilotRuntimeState runtime_state_;
-    pypilot_runtime::PypilotRuntimeProtocol runtime_protocol_;
-    pypilot_runtime::PypilotRuntimeServer<8, 16> runtime_server_;
+    PypilotRuntimeService runtime_;
 
     IBoatImuBackend* imu_backend_;
     IServoBackend* servo_backend_;
