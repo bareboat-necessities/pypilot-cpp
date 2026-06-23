@@ -108,7 +108,7 @@ void PypilotApp::control_tick() {
 
     if (imu_backend_) {
         if (!imu_backend_->poll(runtime_state_, now_us)) {
-            runtime_state_.status_warnings.set(runtime_state_.sensors.status_warnings.get() + 1.0);
+            runtime_state_.sensors.status_warnings.set(runtime_state_.sensors.status_warnings.get() + 1.0);
         }
     }
 
