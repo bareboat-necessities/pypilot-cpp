@@ -26,6 +26,7 @@ COMMON_LIBS=(
 ESP32_LIBS=(
   "${COMMON_LIBS[@]}"
   --libraries "$M/pypilot-mdns"
+  --libraries "$ROOT"
 )
 
 arduino_compile() {
@@ -70,7 +71,9 @@ arduino_compile "$M/pypilot-steering-signaling/examples/arduino/SteeringExample"
 if [[ "$FQBN" == esp32:* ]]; then
   arduino_compile_esp32 "$M/pypilot-mdns/examples/MdnsExample"
   arduino_compile_esp32 "$M/pypilot-runtime/examples/RuntimeServerExample"
+  arduino_compile_esp32 "$ROOT/mcu/atomS3R"
 else
   echo "Skipping pypilot-mdns MdnsExample for non-ESP32 target: $FQBN"
   echo "Skipping pypilot-runtime RuntimeServerExample for non-ESP32 target: $FQBN"
+  echo "Skipping pypilot-cpp AtomS3R sketch for non-ESP32 target: $FQBN"
 fi
