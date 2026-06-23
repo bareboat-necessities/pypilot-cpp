@@ -35,7 +35,7 @@ def read_startup_line(proc: subprocess.Popen, timeout_s: float = 10.0) -> str:
     raise TimeoutError(f"timed out waiting for pypilotd startup; stderr:\n{''.join(lines)}")
 
 
-def recv_until(sock: socket.socket, needle: bytes, timeout_s: float = 5.0) -> bytes:
+def recv_line(sock: socket.socket, timeout_s: float = 5.0) -> bytes:
     deadline = time.monotonic() + timeout_s
     data = bytearray()
     while time.monotonic() < deadline:
@@ -47,9 +47,20 @@ def recv_until(sock: socket.socket, needle: bytes, timeout_s: float = 5.0) -> by
         if not chunk:
             break
         data.extend(chunk)
-        if needle in data:
-            return bytes(data)
-    raise TimeoutError(f"did not receive {needle!r}; received {bytes(data)!r}")
+        if b"\n" in data:
+            return bytes(data[: data.index(b"\n") + 1])
+    raise TimeoutError(f"did not receive a complete runtime protocol line; received {bytes(data)!r}")
+
+
+def recv_line_containing(sock: socket.socket, needle: bytes, timeout_s: float = 5.0) -> bytes:
+    deadline = time.monotonic() + timeout_s
+    seen = bytearray()
+    while time.monotonic() < deadline:
+        line = recv_line(sock, max(0.1, deadline - time.monotonic()))
+        seen.extend(line)
+        if needle in line:
+            return line
+    raise TimeoutError(f"did not receive line containing {needle!r}; received {bytes(seen)!r}")
 
 
 def main() -> int:
@@ -82,12 +93,12 @@ def main() -> int:
 
         with socket.create_connection(("127.0.0.1", port), timeout=5.0) as sock:
             sock.sendall(b"values\n")
-            values_reply = recv_until(sock, b"values={")
+            values_reply = recv_line_containing(sock, b"values={")
             if b"server.version" not in values_reply or b"ap.enabled" not in values_reply:
                 raise AssertionError(f"values catalog missing expected entries: {values_reply!r}")
 
             sock.sendall(b"watch={\"server.version\":0}\n")
-            watch_reply = recv_until(sock, b"server.version=")
+            watch_reply = recv_line_containing(sock, b"server.version=")
             if b"pypilot-cpp" not in watch_reply:
                 raise AssertionError(f"server.version watch did not report pypilot-cpp: {watch_reply!r}")
 
