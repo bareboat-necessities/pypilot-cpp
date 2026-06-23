@@ -33,6 +33,7 @@ clone_or_update pypilot-servo-protocol
 clone_or_update pypilot-client-protocol
 clone_or_update pypilot-algorithms
 clone_or_update pypilot-boatimu
+clone_or_update ocean-imu
 clone_or_update pypilot-nmea0183-connector
 clone_or_update pypilot-signalk-connector
 clone_or_update pypilot-sensors
