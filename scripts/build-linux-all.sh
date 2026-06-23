@@ -41,9 +41,26 @@ cmake_build_test() {
 cmake_build_pypilot_cpp_app() {
   local build_dir="$B/pypilot-cpp"
 
-  echo "::group::Build pypilot-cpp application shell"
+  echo "::group::Build and test pypilot-cpp application"
   cmake -S "$ROOT" -B "$build_dir" -DPYPILOT_MODULES_DIR="$M"
   cmake --build "$build_dir" --parallel
+
+  echo "Registered tests for pypilot-cpp:"
+  ctest --test-dir "$build_dir" -N
+
+  local test_count
+  test_count="$(ctest --test-dir "$build_dir" -N | awk '/Total Tests:/ {print $3}')"
+  if [ -z "$test_count" ]; then
+    echo "Could not determine CTest count for pypilot-cpp" >&2
+    exit 1
+  fi
+  if [ "$test_count" -le 0 ]; then
+    echo "pypilot-cpp registered zero CTest tests" >&2
+    exit 1
+  fi
+
+  TOTAL_TESTS=$((TOTAL_TESTS + test_count))
+  ctest --test-dir "$build_dir" --output-on-failure
   echo "::endgroup::"
 }
 
@@ -103,4 +120,4 @@ cmake_build_test pypilot-steering-signaling \
   -DPYPILOT_SERVO_PROTOCOL_DIR="$M/pypilot-servo-protocol" \
   -DPYPILOT_SYSLIB_DIR="$M/pypilot-syslib"
 
-echo "Total registered module CTest tests: $TOTAL_TESTS"
+echo "Total registered CTest tests: $TOTAL_TESTS"
