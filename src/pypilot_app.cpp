@@ -70,7 +70,7 @@ void PypilotApp::tick(uint64_t now_us) {
     if (status_.state == PypilotAppState::stopped || status_.state == PypilotAppState::fault) {
         return;
     }
-    if (next_tick_us != 0 && now_us < next_tick_us_) {
+    if (next_tick_us_ != 0 && now_us < next_tick_us_) {
         return;
     }
 
