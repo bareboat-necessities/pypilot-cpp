@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 M="$ROOT/modules"
 
-modules=(
+cmake_modules=(
   pypilot-event-loop
   pypilot-settings
   pypilot-mdns
@@ -23,10 +23,23 @@ modules=(
   pypilot-runtime
 )
 
-for name in "${modules[@]}"; do
-  dir="$M/$name"
+checkout_only_modules=(
+  ocean-imu
+)
+
+check_git_checkout() {
+  local name="$1"
+  local dir="$M/$name"
   test -d "$dir"
-  test -f "$dir/CMakeLists.txt"
   git -C "$dir" rev-parse --is-inside-work-tree >/dev/null
   echo "$name -> $(git -C "$dir" rev-parse --short=12 HEAD)"
+}
+
+for name in "${cmake_modules[@]}"; do
+  check_git_checkout "$name"
+  test -f "$M/$name/CMakeLists.txt"
+done
+
+for name in "${checkout_only_modules[@]}"; do
+  check_git_checkout "$name"
 done
