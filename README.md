@@ -2,7 +2,7 @@
 
 Umbrella repository and top-level C++ pypilot application/daemon module.
 
-This repository owns the common application core in `src/`, a short Linux daemon entrypoint in `linux/`, and short MCU-specific Arduino sketches under `mcu/`. The common core directly owns a `pypilot-event-loop` event loop and a `pypilot-runtime` TCP value server. The reusable library code still lives in the separate `modules/` repositories and is pulled together here for checkout, documentation, CI, and cross-module build validation.
+This repository owns the common application composition root in `src/`, a short Linux daemon entrypoint in `linux/`, and short MCU-specific Arduino sketches under `mcu/`. The common app composes a `pypilot-event-loop` event loop with the `pypilot-runtime` service facade; runtime values, TCP handling, watches, and value publication remain the responsibility of `pypilot-runtime`. The reusable library code still lives in the separate `modules/` repositories and is pulled together here for checkout, documentation, CI, and cross-module build validation.
 
 Some repositories are **build/test modules** in this umbrella project. Other repositories are **checkout-only modules** used as source/header dependencies for later integration work and are intentionally not built or tested by this umbrella CI.
 
@@ -26,7 +26,7 @@ modules/             git submodule checkouts for reusable pypilot libraries
 scripts/             bootstrap, verification, and CI build scripts
 ```
 
-The common app core uses `pypilot-event-loop` for scheduling and platform polling, and `pypilot-runtime` for pypilot-compatible TCP values, watches, and value publication. Platform-specific BoatIMU and servo backends must still be wired before closed-loop control is enabled.
+The common app core uses `pypilot-event-loop` for scheduling and platform polling, but delegates pypilot-compatible TCP values, watches, and value publication to `pypilot-runtime`. Platform-specific BoatIMU and servo backends must still be wired before closed-loop control is enabled.
 
 ## Clone
 
@@ -156,4 +156,4 @@ pypilot-steering-signaling
 
 ## Current project status
 
-Completed module groups include GPS adapter, WMM/GPSFilter, BoatIMU sample abstraction, sensor arbitration, APB/NAV command handling, steering signaling, servo runtime, syslib logging, event-loop Linux/libevent phase, settings persistence backends, mDNS/DNS-SD service discovery, cross-module logging integration, the initial `pypilot-runtime` typed TCP/value layer with settings and mDNS helpers, checkout-only `ocean-imu` availability for future marine IMU/AHRS integration, and the root `pypilot-cpp` event-loop/runtime application core for Linux and MCU entrypoints.
+Completed module groups include GPS adapter, WMM/GPSFilter, BoatIMU sample abstraction, sensor arbitration, APB/NAV command handling, steering signaling, servo runtime, syslib logging, event-loop Linux/libevent phase, settings persistence backends, mDNS/DNS-SD service discovery, cross-module logging integration, the initial `pypilot-runtime` typed TCP/value layer with settings and mDNS helpers, checkout-only `ocean-imu` availability for future marine IMU/AHRS integration, and the root `pypilot-cpp` composition root for Linux and MCU entrypoints.
