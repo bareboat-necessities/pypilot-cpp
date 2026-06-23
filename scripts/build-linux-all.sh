@@ -38,8 +38,19 @@ cmake_build_test() {
   echo "::endgroup::"
 }
 
+cmake_build_pypilot_cpp_app() {
+  local build_dir="$B/pypilot-cpp"
+
+  echo "::group::Build pypilot-cpp application shell"
+  cmake -S "$ROOT" -B "$build_dir" -DPYPILOT_MODULES_DIR="$M"
+  cmake --build "$build_dir" --parallel
+  echo "::endgroup::"
+}
+
 bash "$ROOT/scripts/bootstrap-modules.sh"
 bash "$ROOT/scripts/check-submodules.sh"
+
+cmake_build_pypilot_cpp_app
 
 cmake_build_test pypilot-event-loop
 cmake_build_test pypilot-settings
