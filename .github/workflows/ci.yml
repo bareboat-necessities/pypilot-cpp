@@ -24,7 +24,7 @@ jobs:
       - name: Check modules
         run: bash scripts/check-submodules.sh
 
-      - name: Build and test all modules
+      - name: Build modules and run pypilotd integration test
         run: bash scripts/build-linux-all.sh
 
   arduino:
