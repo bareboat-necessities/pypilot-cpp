@@ -2,6 +2,14 @@
 	path = modules/pypilot-event-loop
 	url = https://github.com/bareboat-necessities/pypilot-event-loop.git
 	branch = main
+[submodule "modules/pypilot-settings"]
+	path = modules/pypilot-settings
+	url = https://github.com/bareboat-necessities/pypilot-settings.git
+	branch = main
+[submodule "modules/pypilot-mdns"]
+	path = modules/pypilot-mdns
+	url = https://github.com/bareboat-necessities/pypilot-mdns.git
+	branch = main
 [submodule "modules/pypilot-syslib"]
 	path = modules/pypilot-syslib
 	url = https://github.com/bareboat-necessities/pypilot-syslib.git
@@ -17,6 +25,10 @@
 [submodule "modules/pypilot-client-protocol"]
 	path = modules/pypilot-client-protocol
 	url = https://github.com/bareboat-necessities/pypilot-client-protocol.git
+	branch = main
+[submodule "modules/pypilot-runtime"]
+	path = modules/pypilot-runtime
+	url = https://github.com/bareboat-necessities/pypilot-runtime.git
 	branch = main
 [submodule "modules/pypilot-algorithms"]
 	path = modules/pypilot-algorithms
