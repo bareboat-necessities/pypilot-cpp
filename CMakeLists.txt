@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(PYPILOT_BUILD_LINUX_DAEMON "Build the Linux pypilotd entrypoint" ON)
+option(PYPILOT_BUILD_INTEGRATION_TESTS "Build/register pypilot-cpp integration tests" ON)
 set(PYPILOT_MODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/modules" CACHE PATH "Path to checked-out pypilot module repositories")
 
 if(EXISTS "${PYPILOT_MODULES_DIR}/pypilot-runtime/CMakeLists.txt")
@@ -25,8 +26,22 @@ target_link_libraries(pypilot_cpp_app
     PUBLIC
         pypilot_runtime)
 
+include(CTest)
+if(BUILD_TESTING)
+    find_package(Python3 COMPONENTS Interpreter)
+endif()
+
 if(PYPILOT_BUILD_LINUX_DAEMON)
     add_executable(pypilotd
         linux/pypilotd.cpp)
     target_link_libraries(pypilotd PRIVATE pypilot_cpp_app)
+
+    if(BUILD_TESTING AND PYPILOT_BUILD_INTEGRATION_TESTS AND Python3_Interpreter_FOUND AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        add_test(
+            NAME pypilotd_runtime_tcp_integration
+            COMMAND ${Python3_EXECUTABLE}
+                    ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_pypilotd_runtime_tcp.py
+                    $<TARGET_FILE:pypilotd>)
+        set_tests_properties(pypilotd_runtime_tcp_integration PROPERTIES TIMEOUT 20)
+    endif()
 endif()
