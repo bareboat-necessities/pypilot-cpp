@@ -40,6 +40,7 @@ cmake_build_test() {
 
 cmake_build_pypilot_cpp_app() {
   local build_dir="$B/pypilot-cpp"
+  local root_test_count
 
   echo "::group::Build and test pypilot-cpp application"
   cmake -S "$ROOT" -B "$build_dir" -DPYPILOT_MODULES_DIR="$M"
@@ -48,19 +49,20 @@ cmake_build_pypilot_cpp_app() {
   echo "Registered tests for pypilot-cpp:"
   ctest --test-dir "$build_dir" -N
 
-  local test_count
-  test_count="$(ctest --test-dir "$build_dir" -N | awk '/Total Tests:/ {print $3}')"
-  if [ -z "$test_count" ]; then
-    echo "Could not determine CTest count for pypilot-cpp" >&2
-    exit 1
-  fi
-  if [ "$test_count" -le 0 ]; then
-    echo "pypilot-cpp registered zero CTest tests" >&2
+  if ! ctest --test-dir "$build_dir" -N -R '^pypilotd_runtime_tcp_integration$' | grep -q 'pypilotd_runtime_tcp_integration'; then
+    echo "pypilot-cpp did not register pypilotd_runtime_tcp_integration" >&2
     exit 1
   fi
 
-  TOTAL_TESTS=$((TOTAL_TESTS + test_count))
-  ctest --test-dir "$build_dir" --output-on-failure
+  root_test_count="$(ctest --test-dir "$build_dir" -N -R '^pypilotd_runtime_tcp_integration$' | awk '/Total Tests:/ {print $3}')"
+  if [ -z "$root_test_count" ] || [ "$root_test_count" -ne 1 ]; then
+    echo "Expected exactly one pypilotd_runtime_tcp_integration test, got: ${root_test_count:-unset}" >&2
+    exit 1
+  fi
+
+  TOTAL_TESTS=$((TOTAL_TESTS + root_test_count))
+  echo "Running pypilotd_runtime_tcp_integration with verbose output:"
+  ctest --test-dir "$build_dir" -V -R '^pypilotd_runtime_tcp_integration$'
   echo "::endgroup::"
 }
 
