@@ -1,27 +1,45 @@
-# Submodule pins
+# Submodules
 
-All module entries track `main` in `.gitmodules`. Current CI bootstraps fresh module checkouts from `main` with `scripts/bootstrap-modules.sh`.
+`pypilot-cpp` is an umbrella repository. The code lives in separate module repositories under the `bareboat-necessities` organization, and this repository ties those modules together for checkout, documentation, CI, and cross-module build validation.
 
-This document records the complete umbrella checkout set in one table. The commit values are the latest observed `main` heads for the respective submodule repositories at the time this file was updated. When true gitlink submodules are used, the hash shown by GitHub under `modules/` should match these recorded commits.
+Each module is listed in `.gitmodules` and represented under `modules/` so GitHub shows the module directory entries on the web site. CI also supports refreshing/checking out module repositories with `scripts/bootstrap-modules.sh`.
 
-| Module | Umbrella role | Recorded commit |
-| --- | --- | --- |
-| `pypilot-event-loop` | build/test | `9e391ab5ded6f2c1721587b9b035938c15264cc6` |
-| `pypilot-settings` | build/test | `a453f8693e60246097853bcf885eaa62a7a9caae` |
-| `pypilot-mdns` | build/test | `02854328f0ab3bd8a3f459c521ac1df1d469832f` |
-| `pypilot-syslib` | build/test | `fbd2d2d4c358009232d0ac586df2eb9c60c31630` |
-| `pypilot-data-model` | build/test | `3f1a14b83263df14ecafcc8f62fbd1ba8ab82ef8` |
-| `pypilot-servo-protocol` | build/test | `ba5d5ddc938a06ef1d226e575cea6e057ef1a297` |
-| `pypilot-client-protocol` | build/test | `af3c23f9cbe4144e21b84ace83a98ba522ad91a0` |
-| `pypilot-runtime` | build/test | `694146a4bc4867c2bcf8d277a04cefa2b87f5ff3` |
-| `pypilot-algorithms` | build/test | `f6ddd889d19a00dd94da9ad960d303606afda732` |
-| `pypilot-boatimu` | build/test | `4db929c1726aa2af0318e0bdd92b2c6a3fcb3435` |
-| `ocean-imu` | checkout-only | `a872d34e8aefcd65030eb2ec0c5c2ba3d87f810c` |
-| `pypilot-nmea0183-connector` | build/test | `699b58031a5496678114417e28dc02cd19d48c66` |
-| `pypilot-signalk-connector` | build/test | `c0e2444c6e7e36fc332ef026b69283823005031d` |
-| `pypilot-sensors` | build/test | `a1c875d012639dcff3bd89abe263892cf4093670` |
-| `pypilot-gps-adapter` | build/test | `072caaddd967e579d6b0fdee7bc0611905d5caee` |
-| `pypilot-pilots-logic` | build/test | `18b2ac77fe21caee2ac664cbd9c8d64b6c669607` |
-| `pypilot-steering-signaling` | build/test | `33341e4ed8e2ab7d6cc044d2cc214c0a7dd1c322` |
+## Module roles
 
-`ocean-imu` is checkout-only for future BoatIMU/AHRS integration. It is cloned and verified as a git checkout, but it is not built by `scripts/build-linux-all.sh`, not compiled by `scripts/build-arduino-all.sh`, and its tests are not run by this umbrella repository.
+| Path | Umbrella role | Upstream repository | Build policy |
+| --- | --- | --- | --- |
+| `modules/pypilot-event-loop` | build/test | `bareboat-necessities/pypilot-event-loop` | Built and tested by Linux CI; Arduino examples are compiled where supported. |
+| `modules/pypilot-settings` | build/test | `bareboat-necessities/pypilot-settings` | Built and tested by Linux CI; Arduino library is included. |
+| `modules/pypilot-mdns` | build/test | `bareboat-necessities/pypilot-mdns` | Built and tested by Linux CI; ESP32 mDNS examples are compiled for ESP32-family targets. |
+| `modules/pypilot-syslib` | build/test | `bareboat-necessities/pypilot-syslib` | Built and tested by Linux CI; shared by other modules. |
+| `modules/pypilot-data-model` | build/test | `bareboat-necessities/pypilot-data-model` | Built and tested by Linux CI; header-only data model surface for downstream modules. |
+| `modules/pypilot-servo-protocol` | build/test | `bareboat-necessities/pypilot-servo-protocol` | Built and tested by Linux CI; Arduino examples are compiled. |
+| `modules/pypilot-client-protocol` | build/test | `bareboat-necessities/pypilot-client-protocol` | Built and tested by Linux CI; Arduino library is included. |
+| `modules/pypilot-runtime` | build/test | `bareboat-necessities/pypilot-runtime` | Built and tested by Linux CI with settings and mDNS integration enabled. |
+| `modules/pypilot-algorithms` | build/test | `bareboat-necessities/pypilot-algorithms` | Built and tested by Linux CI; pure algorithm layer for other modules. |
+| `modules/pypilot-boatimu` | build/test | `bareboat-necessities/pypilot-boatimu` | Built and tested by Linux CI; backend-neutral BoatIMU/AHRS abstraction. |
+| `modules/ocean-imu` | checkout-only | `bareboat-necessities/ocean-imu` | Checked out for future BoatIMU/AHRS integration; not built or tested by this umbrella CI. |
+| `modules/pypilot-nmea0183-connector` | build/test | `bareboat-necessities/pypilot-nmea0183-connector` | Built and tested by Linux CI; Arduino library is included. |
+| `modules/pypilot-signalk-connector` | build/test | `bareboat-necessities/pypilot-signalk-connector` | Built and tested by Linux CI with Signal K mDNS discovery support when available. |
+| `modules/pypilot-sensors` | build/test | `bareboat-necessities/pypilot-sensors` | Built and tested by Linux CI; sensor arbitration and connector-adapter layer. |
+| `modules/pypilot-gps-adapter` | build/test | `bareboat-necessities/pypilot-gps-adapter` | Built and tested by Linux CI; optional gpsd support is platform-specific. |
+| `modules/pypilot-pilots-logic` | build/test | `bareboat-necessities/pypilot-pilots-logic` | Built and tested by Linux CI; pilot-mode and command logic. |
+| `modules/pypilot-steering-signaling` | build/test | `bareboat-necessities/pypilot-steering-signaling` | Built and tested by Linux CI; steering safety and servo signaling layer. |
+
+## Build policy
+
+Normal `pypilot-*` modules are part of the umbrella validation flow unless a particular example is platform-gated. `ocean-imu` is intentionally different: it is available as a source/header dependency for future integration work, but this umbrella project does not build it or run its tests.
+
+## Updating module checkouts
+
+For day-to-day development and CI, use:
+
+```bash
+bash scripts/bootstrap-modules.sh
+```
+
+For recursive git submodule workflows, use:
+
+```bash
+git submodule update --init --recursive
+```
