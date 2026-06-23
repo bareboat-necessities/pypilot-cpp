@@ -24,8 +24,11 @@ jobs:
       - name: Check modules
         run: bash scripts/check-submodules.sh
 
-      - name: Build modules and run pypilotd integration test
+      - name: Build and test Linux modules
         run: bash scripts/build-linux-all.sh
+
+      - name: Run runtime TCP integration test
+        run: bash scripts/run-linux-integration-tests.sh
 
   arduino:
     runs-on: ubuntu-latest
