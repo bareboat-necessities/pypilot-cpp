@@ -10,6 +10,11 @@ from typing import List
 
 
 PORT_RE = re.compile(r"runtime server listening on port (\d+)")
+PREFIX = "[pypilotd-runtime-it]"
+
+
+def log(message: str) -> None:
+    print(f"{PREFIX} {message}", flush=True)
 
 
 def read_startup_line(proc: subprocess.Popen, timeout_s: float = 10.0) -> str:
@@ -28,6 +33,7 @@ def read_startup_line(proc: subprocess.Popen, timeout_s: float = 10.0) -> str:
         line = proc.stderr.readline()
         if line:
             lines.append(line)
+            log(f"pypilotd stderr: {line.rstrip()}")
             if PORT_RE.search(line):
                 return line
         else:
@@ -58,6 +64,7 @@ def recv_line_containing(sock: socket.socket, needle: bytes, timeout_s: float = 
     while time.monotonic() < deadline:
         line = recv_line(sock, max(0.1, deadline - time.monotonic()))
         seen.extend(line)
+        log(f"received runtime line: {line[:240]!r}{'...' if len(line) > 240 else ''}")
         if needle in line:
             return line
     raise TimeoutError(f"did not receive line containing {needle!r}; received {bytes(seen)!r}")
@@ -73,6 +80,8 @@ def main() -> int:
     env["PYPILOTD_RUNTIME_HOST"] = "127.0.0.1"
     env["PYPILOTD_RUNTIME_PORT"] = "0"
 
+    log(f"starting pypilotd: {pypilotd}")
+    log("using PYPILOTD_RUNTIME_HOST=127.0.0.1 and PYPILOTD_RUNTIME_PORT=0")
     proc = subprocess.Popen(
         [pypilotd],
         stdin=subprocess.DEVNULL,
@@ -90,29 +99,43 @@ def main() -> int:
         port = int(match.group(1))
         if port <= 0:
             raise RuntimeError(f"invalid assigned runtime port: {port}")
+        log(f"pypilotd reported runtime TCP port {port}")
 
+        log(f"connecting to 127.0.0.1:{port}")
         with socket.create_connection(("127.0.0.1", port), timeout=5.0) as sock:
+            log("connected")
+
+            log("sending: values")
             sock.sendall(b"values\n")
             values_reply = recv_line_containing(sock, b"values={")
             if b"server.version" not in values_reply or b"ap.enabled" not in values_reply:
                 raise AssertionError(f"values catalog missing expected entries: {values_reply!r}")
+            log("verified values catalog contains server.version and ap.enabled")
 
+            log('sending: watch={"server.version":0}')
             sock.sendall(b"watch={\"server.version\":0}\n")
             watch_reply = recv_line_containing(sock, b"server.version=")
             if b"pypilot-cpp" not in watch_reply:
                 raise AssertionError(f"server.version watch did not report pypilot-cpp: {watch_reply!r}")
+            log("verified server.version watch returns pypilot-cpp")
 
+            log("sending: ap.enabled=false")
             sock.sendall(b"ap.enabled=false\n")
+            log("runtime command write completed")
 
     finally:
         if proc.poll() is None:
+            log("terminating pypilotd")
             proc.send_signal(signal.SIGTERM)
             try:
                 proc.wait(timeout=5.0)
             except subprocess.TimeoutExpired:
+                log("pypilotd did not exit after SIGTERM; killing")
                 proc.kill()
                 proc.wait(timeout=5.0)
+        log(f"pypilotd exit code: {proc.returncode}")
 
+    log("PASS")
     return 0
 
 
