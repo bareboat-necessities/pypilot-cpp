@@ -1,8 +1,8 @@
 # pypilot-cpp
 
-Umbrella repository for the modular C++ pypilot port.
+Umbrella repository and top-level C++ pypilot application/daemon module.
 
-This repository does not duplicate module code. It defines the module set, tracks each module on `main`, bootstraps module checkouts for CI, documents the build graph, and runs Linux and Arduino builds across the full dependency chain.
+This repository owns the common application shell in `src/`, a short Linux daemon entrypoint in `linux/`, and short MCU-specific Arduino sketches under `mcu/`. The reusable library code still lives in the separate `modules/` repositories and is pulled together here for checkout, documentation, CI, and cross-module build validation.
 
 Some repositories are **build/test modules** in this umbrella project. Other repositories are **checkout-only modules** used as source/header dependencies for later integration work and are intentionally not built or tested by this umbrella CI.
 
@@ -15,6 +15,19 @@ This project is a modular C++ port inspired by and based on the original PyPilot
 
 Credit and thanks go to Sean D'Epagnier and the PyPilot contributors for the original open-source marine autopilot implementation.
 
+## Repository layout
+
+```text
+src/                 common pypilot application/daemon source
+linux/               short Linux-specific entrypoints, including pypilotd.cpp
+mcu/                 short MCU-specific Arduino sketches
+mcu/atomS3R/         AtomS3R sketch entrypoint
+modules/             git submodule checkouts for reusable pypilot libraries
+scripts/             bootstrap, verification, and CI build scripts
+```
+
+The common app shell does not invent hardware. Platform-specific BoatIMU and servo backends must be wired before closed-loop control is enabled.
+
 ## Clone
 
 ```bash
@@ -23,7 +36,7 @@ cd pypilot-cpp
 bash scripts/bootstrap-modules.sh
 ```
 
-If true gitlink submodules are later committed, this also works:
+Recursive submodule checkout also works:
 
 ```bash
 git clone --recurse-submodules https://github.com/bareboat-necessities/pypilot-cpp.git
@@ -39,12 +52,12 @@ Each module tracks `main`. CI bootstraps fresh module checkouts with `scripts/bo
 bash scripts/bootstrap-modules.sh
 ```
 
-For a future gitlink submodule tree:
+For a git submodule tree:
 
 ```bash
 git submodule update --remote --recursive
 git add modules
-git commit -m "Update pypilot module pins"
+git commit -m "Update pypilot modules"
 ```
 
 ## Effective checkout set
@@ -102,7 +115,7 @@ bash scripts/bootstrap-modules.sh
 bash scripts/build-linux-all.sh
 ```
 
-The Linux CI installs `libevent-dev` because `pypilot-event-loop` uses libevent as the Linux backend. The Linux umbrella build also builds and tests `pypilot-settings`, `pypilot-mdns`, `pypilot-runtime` with settings and mDNS enabled, and `pypilot-signalk-connector` with Signal K mDNS discovery enabled.
+The Linux CI installs `libevent-dev` because `pypilot-event-loop` uses libevent as the Linux backend. The Linux umbrella build also builds the root `pypilot-cpp` app shell and `linux/pypilotd.cpp`, then builds and tests the module set. `pypilot-settings`, `pypilot-mdns`, and `pypilot-runtime` are built with settings and mDNS enabled, and `pypilot-signalk-connector` is built with Signal K mDNS discovery enabled.
 
 `ocean-imu` is bootstrapped and checked out for future BoatIMU/AHRS integration, but it is intentionally excluded from the umbrella Linux build and test script. Build or test `ocean-imu` from its own repository when needed.
 
@@ -113,7 +126,7 @@ bash scripts/bootstrap-modules.sh
 bash scripts/build-arduino-all.sh
 ```
 
-The Arduino build script targets `arduino:avr:mega` by default because it is a broad AVR compile target for CI. `pypilot-settings` is included as an Arduino library. `pypilot-mdns` and runtime server examples are compiled only for ESP32-family targets because they use ESP32 networking / mDNS support.
+The Arduino build script targets `arduino:avr:mega` by default because it is a broad AVR compile target for CI. `pypilot-settings` is included as an Arduino library. `pypilot-mdns`, runtime server examples, and `mcu/atomS3R/pypilot.ino` are compiled only for ESP32-family targets because they use ESP32 networking / platform support.
 
 `ocean-imu` is not passed to `arduino-cli` by the umbrella Arduino build. ESP32-S3 sketches that use `ocean-imu` should include it explicitly when those integrations are added.
 
@@ -143,4 +156,4 @@ pypilot-steering-signaling
 
 ## Current project status
 
-Completed module groups include GPS adapter, WMM/GPSFilter, BoatIMU sample abstraction, sensor arbitration, APB/NAV command handling, steering signaling, servo runtime, syslib logging, event-loop Linux/libevent phase, settings persistence backends, mDNS/DNS-SD service discovery, cross-module logging integration, the initial `pypilot-runtime` typed TCP/value layer with settings and mDNS helpers, and checkout-only `ocean-imu` availability for future marine IMU/AHRS integration.
+Completed module groups include GPS adapter, WMM/GPSFilter, BoatIMU sample abstraction, sensor arbitration, APB/NAV command handling, steering signaling, servo runtime, syslib logging, event-loop Linux/libevent phase, settings persistence backends, mDNS/DNS-SD service discovery, cross-module logging integration, the initial `pypilot-runtime` typed TCP/value layer with settings and mDNS helpers, checkout-only `ocean-imu` availability for future marine IMU/AHRS integration, and the root `pypilot-cpp` application shell layout for common, Linux, and MCU entrypoints.
