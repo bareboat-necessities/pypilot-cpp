@@ -101,8 +101,8 @@ private:
     void stop_input_services();
 
     PypilotEventLoop loop_;
-    PypilotRuntimeService runtime_;
     PypilotDataModel model_;
+    PypilotRuntimeService runtime_;
 
     IBoatImuBackend* imu_backend_;
     IServoBackend* servo_backend_;
