@@ -1,6 +1,22 @@
+#include <cstring>
+
 #include "pypilot_app.hpp"
 
 namespace pypilot {
+
+namespace {
+
+void copy_text(char* out, size_t out_size, const char* text) {
+    if (!out || out_size == 0) return;
+    if (!text) {
+        out[0] = '\0';
+        return;
+    }
+    std::strncpy(out, text, out_size - 1);
+    out[out_size - 1] = '\0';
+}
+
+} // namespace
 
 PypilotApp::PypilotApp()
     : loop_(),
@@ -35,6 +51,9 @@ bool PypilotApp::begin(IBoatImuBackend* imu_backend,
         set_fault(runtime_.fault());
         return false;
     }
+
+    copy_text(model_.server.version, sizeof(model_.server.version), runtime_.state().sensors.server_version.get());
+    copy_text(model_.server.profile_name, sizeof(model_.server.profile_name), runtime_.state().sensors.profile_name.get());
 
     for (size_t i = 0; i < input_service_count_; ++i) {
         if (!input_services_ || !input_services_[i]) {
