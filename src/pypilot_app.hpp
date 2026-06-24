@@ -1,6 +1,5 @@
 #pragma once
 
-#include <stddef.h>
 #include <stdint.h>
 
 #if defined(ARDUINO) && defined(ESP32)
@@ -33,25 +32,6 @@ public:
     virtual bool apply(pypilot_runtime::PypilotRuntimeState& runtime, uint64_t now_us) = 0;
 };
 
-struct PypilotAppConfig {
-    const char* runtime_host;
-    uint16_t runtime_port;
-    uint16_t runtime_udp_watch_port;
-    uint32_t runtime_publish_period_us;
-    uint32_t control_period_us;
-    size_t max_runtime_output_bytes;
-    bool enable_runtime_tcp;
-
-    PypilotAppConfig()
-        : runtime_host("0.0.0.0"),
-          runtime_port(23322),
-          runtime_udp_watch_port(0),
-          runtime_publish_period_us(50000u),
-          control_period_us(50000u),
-          max_runtime_output_bytes(32768u),
-          enable_runtime_tcp(true) {}
-};
-
 enum class PypilotAppState : uint8_t {
     stopped,
     running,
@@ -79,7 +59,7 @@ class PypilotApp {
 public:
     PypilotApp();
 
-    bool begin(IBoatImuBackend* imu_backend, IServoBackend* servo_backend, const PypilotAppConfig& config = PypilotAppConfig());
+    bool begin(IBoatImuBackend* imu_backend, IServoBackend* servo_backend);
     void tick();
     void run_forever();
     void request_exit();
@@ -91,6 +71,8 @@ public:
     const PypilotAppStatus& status() const { return status_; }
 
 private:
+    static constexpr uint32_t kControlPeriodUs = 50000u;
+
     void control_tick();
     void set_fault(const char* message);
     void publish_runtime();
@@ -100,7 +82,6 @@ private:
 
     IBoatImuBackend* imu_backend_;
     IServoBackend* servo_backend_;
-    PypilotAppConfig config_;
     PypilotAppStatus status_;
     pypilot_event_loop::EventHandle control_tick_handle_;
 };
