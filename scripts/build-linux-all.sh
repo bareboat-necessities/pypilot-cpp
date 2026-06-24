@@ -40,8 +40,9 @@ cmake_build_test() {
 
 cmake_build_pypilot_cpp_app() {
   local build_dir="$B/pypilot-cpp"
+  local unit_test_count
 
-  echo "::group::Build pypilot-cpp application"
+  echo "::group::Build and test pypilot-cpp application"
   cmake -S "$ROOT" -B "$build_dir" -DPYPILOT_MODULES_DIR="$M"
   cmake --build "$build_dir" --parallel
 
@@ -53,6 +54,18 @@ cmake_build_pypilot_cpp_app() {
     exit 1
   fi
 
+  unit_test_count="$(ctest --test-dir "$build_dir" -N -E '^pypilotd_runtime_tcp_integration$' | awk '/Total Tests:/ {print $3}')"
+  if [ -z "$unit_test_count" ]; then
+    echo "Could not determine pypilot-cpp unit test count" >&2
+    exit 1
+  fi
+  if [ "$unit_test_count" -le 0 ]; then
+    echo "pypilot-cpp registered zero non-integration tests" >&2
+    exit 1
+  fi
+
+  TOTAL_TESTS=$((TOTAL_TESTS + unit_test_count))
+  ctest --test-dir "$build_dir" --output-on-failure -E '^pypilotd_runtime_tcp_integration$'
   echo "pypilotd_runtime_tcp_integration is registered and will run in the dedicated CI step."
   echo "::endgroup::"
 }
@@ -113,4 +126,4 @@ cmake_build_test pypilot-steering-signaling \
   -DPYPILOT_SERVO_PROTOCOL_DIR="$M/pypilot-servo-protocol" \
   -DPYPILOT_SYSLIB_DIR="$M/pypilot-syslib"
 
-echo "Total registered module CTest tests: $TOTAL_TESTS"
+echo "Total registered module/root CTest tests except dedicated integration: $TOTAL_TESTS"
