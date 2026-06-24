@@ -29,6 +29,11 @@ target_link_libraries(pypilot_cpp_app
 include(CTest)
 if(BUILD_TESTING)
     find_package(Python3 COMPONENTS Interpreter)
+
+    add_executable(test_app_event_driven_input_service
+        tests/test_app_event_driven_input_service.cpp)
+    target_link_libraries(test_app_event_driven_input_service PRIVATE pypilot_cpp_app)
+    add_test(NAME test_app_event_driven_input_service COMMAND test_app_event_driven_input_service)
 endif()
 
 if(PYPILOT_BUILD_LINUX_DAEMON)
