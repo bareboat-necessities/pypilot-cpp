@@ -15,6 +15,10 @@ This project is a modular C++ port inspired by and based on the original PyPilot
 
 Credit and thanks go to Sean D'Epagnier and the PyPilot contributors for the original open-source marine autopilot implementation.
 
+## Algorithmic methods reference
+
+For background on the control and estimation methods considered in this port, see [Algorithmic Methods in Open Source Marine Autopilots](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/autopilots-methods.pdf).
+
 ## Repository layout
 
 ```text
