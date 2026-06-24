@@ -1,27 +1,11 @@
-#include <cstring>
-
 #include "pypilot_app.hpp"
 
 namespace pypilot {
 
-namespace {
-
-void copy_text(char* out, size_t out_size, const char* text) {
-    if (!out || out_size == 0) return;
-    if (!text) {
-        out[0] = '\0';
-        return;
-    }
-    std::strncpy(out, text, out_size - 1);
-    out[out_size - 1] = '\0';
-}
-
-} // namespace
-
 PypilotApp::PypilotApp()
     : loop_(),
-      runtime_(loop_),
       model_(),
+      runtime_(loop_, model_),
       imu_backend_(nullptr),
       servo_backend_(nullptr),
       input_services_(nullptr),
@@ -52,9 +36,6 @@ bool PypilotApp::begin(IBoatImuBackend* imu_backend,
         return false;
     }
 
-    copy_text(model_.server.version, sizeof(model_.server.version), runtime_.state().sensors.server_version.get());
-    copy_text(model_.server.profile_name, sizeof(model_.server.profile_name), runtime_.state().sensors.profile_name.get());
-
     for (size_t i = 0; i < input_service_count_; ++i) {
         if (!input_services_ || !input_services_[i]) {
             set_fault("invalid input service");
@@ -71,8 +52,6 @@ bool PypilotApp::begin(IBoatImuBackend* imu_backend,
     }
 
     model_.servo.engaged.value = false;
-    runtime_.state().servo.state.set(servo_backend_ ? "idle" : "no_servo_backend");
-    runtime_.state().servo.engaged.set(false);
 
     control_tick_handle_ = loop_.on_repeat_us(kControlPeriodUs, [this]() { control_tick(); });
     if (!control_tick_handle_.assigned()) {
@@ -113,8 +92,6 @@ void PypilotApp::stop() {
         control_tick_handle_ = pypilot_event_loop::EventHandle{};
     }
     stop_input_services();
-    runtime_.state().servo.engaged.set(false);
-    runtime_.state().servo.state.set("stopped");
     runtime_.stop();
     status_.runtime_listening = false;
     status_.runtime_port = 0;
@@ -146,7 +123,6 @@ void PypilotApp::control_tick() {
         if (servo_backend_) {
             servo_backend_->disable(model_, now_us);
         }
-        runtime_.state().servo.state.set(servo_backend_ ? "disabled" : "no_servo_backend");
         publish_runtime();
         return;
     }
@@ -154,7 +130,6 @@ void PypilotApp::control_tick() {
     if (!imu_backend_) {
         model_.servo.engaged.value = false;
         ++model_.status.faults.value;
-        runtime_.state().servo.state.set("no_imu_backend");
         publish_runtime();
         return;
     }
@@ -162,7 +137,6 @@ void PypilotApp::control_tick() {
     if (!servo_backend_) {
         model_.servo.engaged.value = false;
         ++model_.status.faults.value;
-        runtime_.state().servo.state.set("no_servo_backend");
         publish_runtime();
         return;
     }
@@ -171,9 +145,6 @@ void PypilotApp::control_tick() {
     if (!servo_backend_->apply(model_, now_us)) {
         model_.servo.engaged.value = false;
         ++model_.status.faults.value;
-        runtime_.state().servo.state.set("servo_rejected_command");
-    } else {
-        runtime_.state().servo.state.set("active");
     }
     publish_runtime();
 }
@@ -196,9 +167,6 @@ void PypilotApp::set_fault(const char* message) {
     status_.fault = message ? message : "fault";
     ++model_.status.faults.value;
     model_.servo.engaged.value = false;
-    runtime_.state().sensors.status_faults.set(runtime_.state().sensors.status_faults.get() + 1.0);
-    runtime_.state().servo.engaged.set(false);
-    runtime_.state().servo.state.set(status_.fault);
 }
 
 } // namespace pypilot
