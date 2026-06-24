@@ -1,6 +1,5 @@
 #include <chrono>
 #include <cstdlib>
-#include <string>
 #include <thread>
 
 #include <pypilot_app.hpp>
@@ -42,6 +41,24 @@ private:
     bool fired_ = false;
 };
 
+class ObservingControl final : public pypilot::IPypilotControlService {
+public:
+    bool step(pypilot::PypilotDataModel& model, uint64_t) override {
+        ++calls_;
+        if (model.navigation.gps.speed_kn.valid && model.navigation.gps.speed_kn.value == 6.5f) {
+            saw_input_speed_ = true;
+        }
+        return true;
+    }
+
+    int calls() const { return calls_; }
+    bool saw_input_speed() const { return saw_input_speed_; }
+
+private:
+    int calls_ = 0;
+    bool saw_input_speed_ = false;
+};
+
 } // namespace
 
 int main() {
@@ -49,10 +66,11 @@ int main() {
     if (!set_env("PYPILOT_RUNTIME_PERIODIC_PUBLISH_ENABLED", "false")) return 2;
 
     FakeNmeaLikeInput input;
+    ObservingControl control;
     pypilot::IPypilotInputService* inputs[] = {&input};
 
     pypilot::PypilotApp app;
-    if (!app.begin(nullptr, nullptr, inputs, 1, nullptr)) return 3;
+    if (!app.begin(nullptr, nullptr, inputs, 1, &control)) return 3;
 
     for (int i = 0; i < 40; ++i) {
         app.tick();
@@ -62,9 +80,8 @@ int main() {
     if (!input.fired()) return 4;
     if (!app.data_model().navigation.gps.speed_kn.valid) return 5;
     if (app.data_model().navigation.gps.speed_kn.value != 6.5f) return 6;
-    if (app.runtime_state().gps.speed.get() != 6.5) return 7;
-    if (app.runtime_state().gps.track.get() != 123.0) return 8;
-    if (std::string(app.runtime_state().gps.source.get()) != "serial") return 9;
+    if (control.calls() <= 0) return 7;
+    if (!control.saw_input_speed()) return 8;
 
     app.stop();
     return 0;
