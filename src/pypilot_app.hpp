@@ -15,7 +15,6 @@
 #include <pypilot_data_model.hpp>
 #include <pypilot_event_loop.hpp>
 #include <pypilot_runtime.hpp>
-#include <pypilot_runtime_data_model_publication.hpp>
 
 namespace pypilot {
 
