@@ -1,5 +1,6 @@
 #include <chrono>
 #include <cstdlib>
+#include <string>
 #include <thread>
 
 #include <pypilot_app.hpp>
