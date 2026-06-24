@@ -6,12 +6,7 @@ static pypilot::PypilotApp app;
 void setup() {
     Serial.begin(115200);
 
-    pypilot::PypilotAppConfig config;
-    config.runtime_host = "0.0.0.0";
-    config.runtime_port = 23322;
-    config.control_period_us = 50000u;
-
-    if (!app.begin(nullptr, nullptr, config)) {
+    if (!app.begin(nullptr, nullptr)) {
         Serial.print("pypilot atomS3R: failed to start: ");
         Serial.println(app.status().fault);
         return;
