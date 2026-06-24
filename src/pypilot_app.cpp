@@ -113,7 +113,6 @@ void PypilotApp::stop() {
         control_tick_handle_ = pypilot_event_loop::EventHandle{};
     }
     stop_input_services();
-    pypilot_runtime::publish_data_model_to_runtime(runtime_.state(), model_);
     runtime_.state().servo.engaged.set(false);
     runtime_.state().servo.state.set("stopped");
     runtime_.stop();
@@ -123,12 +122,10 @@ void PypilotApp::stop() {
 }
 
 void PypilotApp::control_tick() {
-    pypilot_runtime::PypilotRuntimeState& runtime_state = runtime_.state();
     const uint64_t now_us = loop_.clock().micros();
     status_.last_control_tick_us = now_us;
     ++status_.control_ticks;
 
-    pypilot_runtime::apply_runtime_commands_to_data_model(runtime_state, model_, now_us);
     model_.server.uptime_s.set(static_cast<float>(now_us) / 1000000.0f, now_us);
 
     if (imu_backend_) {
@@ -149,8 +146,7 @@ void PypilotApp::control_tick() {
         if (servo_backend_) {
             servo_backend_->disable(model_, now_us);
         }
-        pypilot_runtime::publish_data_model_to_runtime(runtime_state, model_);
-        runtime_state.servo.state.set(servo_backend_ ? "disabled" : "no_servo_backend");
+        runtime_.state().servo.state.set(servo_backend_ ? "disabled" : "no_servo_backend");
         publish_runtime();
         return;
     }
@@ -158,8 +154,7 @@ void PypilotApp::control_tick() {
     if (!imu_backend_) {
         model_.servo.engaged.value = false;
         ++model_.status.faults.value;
-        pypilot_runtime::publish_data_model_to_runtime(runtime_state, model_);
-        runtime_state.servo.state.set("no_imu_backend");
+        runtime_.state().servo.state.set("no_imu_backend");
         publish_runtime();
         return;
     }
@@ -167,8 +162,7 @@ void PypilotApp::control_tick() {
     if (!servo_backend_) {
         model_.servo.engaged.value = false;
         ++model_.status.faults.value;
-        pypilot_runtime::publish_data_model_to_runtime(runtime_state, model_);
-        runtime_state.servo.state.set("no_servo_backend");
+        runtime_.state().servo.state.set("no_servo_backend");
         publish_runtime();
         return;
     }
@@ -177,11 +171,9 @@ void PypilotApp::control_tick() {
     if (!servo_backend_->apply(model_, now_us)) {
         model_.servo.engaged.value = false;
         ++model_.status.faults.value;
-        pypilot_runtime::publish_data_model_to_runtime(runtime_state, model_);
-        runtime_state.servo.state.set("servo_rejected_command");
+        runtime_.state().servo.state.set("servo_rejected_command");
     } else {
-        pypilot_runtime::publish_data_model_to_runtime(runtime_state, model_);
-        runtime_state.servo.state.set("active");
+        runtime_.state().servo.state.set("active");
     }
     publish_runtime();
 }
