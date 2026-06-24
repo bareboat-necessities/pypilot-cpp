@@ -2,7 +2,9 @@
 
 Umbrella repository and top-level C++ pypilot application/daemon module.
 
-This repository owns the common application composition root in `src/`, a short Linux daemon entrypoint in `linux/`, and short MCU-specific Arduino sketches under `mcu/`. The common app composes a `pypilot-event-loop` event loop with the `pypilot-runtime` service facade; runtime values, TCP handling, watches, and value publication remain the responsibility of `pypilot-runtime`. The reusable library code still lives in the separate `modules/` repositories and is pulled together here for checkout, documentation, CI, and cross-module build validation.
+This repository owns the common application composition root in `src/`, a short Linux daemon entrypoint in `linux/`, and short MCU-specific Arduino sketches under `mcu/`. The common app composes a `pypilot-event-loop` event loop with the `pypilot-runtime` service facade and a shared `pypilot-data-model` state. Runtime values, TCP handling, watches, settings, and value publication remain the responsibility of `pypilot-runtime`. Connector/input services register event-loop callbacks and update the shared data model from their own protocol handlers; the periodic app control task reads that latest model state and drives control/servo output.
+
+The reusable library code still lives in the separate `modules/` repositories and is pulled together here for checkout, documentation, CI, and cross-module build validation.
 
 Some repositories are **build/test modules** in this umbrella project. Other repositories are **checkout-only modules** used as source/header dependencies for later integration work and are intentionally not built or tested by this umbrella CI.
 
@@ -30,7 +32,7 @@ modules/             git submodule checkouts for reusable pypilot libraries
 scripts/             bootstrap, verification, and CI build scripts
 ```
 
-The common app core uses `pypilot-event-loop` for scheduling and platform polling, but delegates pypilot-compatible TCP values, watches, and value publication to `pypilot-runtime`. Platform-specific BoatIMU and servo backends must still be wired before closed-loop control is enabled.
+The common app core uses `pypilot-event-loop` for scheduling and platform polling, stores latest state in `pypilot-data-model`, lets input services update that state from event-driven connector callbacks, and delegates pypilot-compatible TCP values, watches, settings, and value publication to `pypilot-runtime`. Platform-specific BoatIMU and servo backends must still be wired before closed-loop control is enabled.
 
 ## Clone
 
