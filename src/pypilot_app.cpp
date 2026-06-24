@@ -7,36 +7,20 @@ PypilotApp::PypilotApp()
       runtime_(loop_),
       imu_backend_(0),
       servo_backend_(0),
-      config_(),
       status_(),
       control_tick_handle_() {}
 
-bool PypilotApp::begin(IBoatImuBackend* imu_backend, IServoBackend* servo_backend, const PypilotAppConfig& config) {
+bool PypilotApp::begin(IBoatImuBackend* imu_backend, IServoBackend* servo_backend) {
     imu_backend_ = imu_backend;
     servo_backend_ = servo_backend;
-    config_ = config;
     status_ = PypilotAppStatus();
 
     if (!loop_.valid()) {
         set_fault("event loop backend is not valid");
         return false;
     }
-    if (config_.control_period_us == 0) {
-        set_fault("control loop period is zero");
-        return false;
-    }
 
-    pypilot_runtime::PypilotRuntimeServiceOptions runtime_options;
-    runtime_options.host = config_.runtime_host;
-    runtime_options.tcp_port = config_.runtime_port;
-    runtime_options.udp_watch_port = config_.runtime_udp_watch_port;
-    runtime_options.publish_period_us = config_.runtime_publish_period_us;
-    runtime_options.max_output_bytes = config_.max_runtime_output_bytes;
-    runtime_options.enable_tcp = config_.enable_runtime_tcp;
-    runtime_options.enable_periodic_publish = true;
-    runtime_options.server_version = "pypilot-cpp";
-
-    if (!runtime_.begin(runtime_options)) {
+    if (!runtime_.begin()) {
         set_fault(runtime_.fault());
         return false;
     }
@@ -44,7 +28,7 @@ bool PypilotApp::begin(IBoatImuBackend* imu_backend, IServoBackend* servo_backen
     runtime_.state().servo.state.set(servo_backend_ ? "idle" : "no_servo_backend");
     runtime_.state().servo.engaged.set(false);
 
-    control_tick_handle_ = loop_.on_repeat_us(config_.control_period_us, [this]() { control_tick(); });
+    control_tick_handle_ = loop_.on_repeat_us(kControlPeriodUs, [this]() { control_tick(); });
     if (!control_tick_handle_.assigned()) {
         set_fault("failed to register control loop task");
         return false;
