@@ -18,7 +18,11 @@ bool PypilotApp::begin(IBoatImuBackend* imu_backend,
                        IServoBackend* servo_backend,
                        IPypilotInputService* const* input_services,
                        size_t input_service_count,
-                       IPypilotControlService* control_service) {
+                       IPypilotControlService* control_service
+#if defined(PYPILOT_RUNTIME_WITH_SETTINGS)
+                       , pypilot_settings::SettingsManager* runtime_settings
+#endif
+                       ) {
     imu_backend_ = imu_backend;
     servo_backend_ = servo_backend;
     input_services_ = input_services;
@@ -31,7 +35,12 @@ bool PypilotApp::begin(IBoatImuBackend* imu_backend,
         return false;
     }
 
-    if (!runtime_.begin()) {
+#if defined(PYPILOT_RUNTIME_WITH_SETTINGS)
+    const bool runtime_started = runtime_settings ? runtime_.begin(*runtime_settings) : runtime_.begin();
+#else
+    const bool runtime_started = runtime_.begin();
+#endif
+    if (!runtime_started) {
         set_fault(runtime_.fault());
         return false;
     }
