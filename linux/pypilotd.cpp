@@ -13,9 +13,9 @@
 
 #include "pypilot_app.hpp"
 #include "pypilot_servo_backend.hpp"
-#include "pypilot_servo_discovery.hpp"
 
 static constexpr const char* PYPILOT_SERVO_SERIAL_ENV = "PYPILOT_SERVO_SERIAL";
+static constexpr int PYPILOT_SERVO_SERIAL_BAUD = 38400;
 
 static bool ensure_directory(const char* path) {
     if (!path || !*path) return false;
@@ -31,26 +31,9 @@ static bool apply_original_tcp_environment(pypilot_settings::SettingsManager& ru
     return runtime_settings.save_value("runtime.tcp.port", port, error, sizeof(error));
 }
 
-class LinuxServoPortOpener final : public pypilot::IPypilotServoPortOpener {
-public:
-    explicit LinuxServoPortOpener(pypilot_servo_protocol::LinuxSerialTransport& transport)
-        : transport_(transport), current_path_() {}
-
-    bool servo_port_is_open() const override { return transport_.is_open(); }
-
-    bool open_servo_port(const pypilot::PypilotServoPortCandidate& candidate) override {
-        if (!candidate.path || !candidate.path[0]) return false;
-        if (!transport_.open_device(candidate.path, candidate.baud)) return false;
-        current_path_ = candidate.path;
-        return true;
-    }
-
-    const char* current_path() const { return current_path_.c_str(); }
-
-private:
-    pypilot_servo_protocol::LinuxSerialTransport& transport_;
-    std::string current_path_;
-};
+static bool open_servo_serial(pypilot_servo_protocol::LinuxSerialTransport& transport, const char* path) {
+    return path && path[0] && (transport.is_open() || transport.open_device(path, PYPILOT_SERVO_SERIAL_BAUD));
+}
 
 int main(int, char**) {
     char config_dir[256]{};
@@ -85,13 +68,6 @@ int main(int, char**) {
     const bool servo_configured = servo_serial && servo_serial[0];
 
     pypilot_servo_protocol::LinuxSerialTransport servo_transport;
-    LinuxServoPortOpener servo_opener(servo_transport);
-    pypilot::PypilotServoDiscovery servo_discovery(servo_opener);
-    pypilot::PypilotServoCandidateList<1> servo_candidates;
-    if (servo_configured) {
-        servo_candidates.add(servo_serial, 38400, true);
-    }
-
     pypilot_steering_signaling::ServoRuntimeConfig servo_config;
     servo_config.safety.enforce_rudder_limits = false;
     pypilot::PypilotServoBackend servo_backend(servo_transport, servo_config);
@@ -107,14 +83,13 @@ int main(int, char**) {
 
     if (servo_configured) {
         app.loop().on_repeat_us(1000000u, [&]() {
-            const uint64_t now_us = app.loop().clock().micros();
-            if (!servo_transport.is_open() && servo_discovery.ensure_open(servo_candidates.data(), servo_candidates.count(), now_us)) {
+            if (open_servo_serial(servo_transport, servo_serial)) {
                 servo_backend.reset_protocol();
                 app.data_model().servo.has_controller = true;
                 app.data_model().servo_telemetry.controller_state.value = pypilot_data_model::ServoControllerState::idle;
                 pypilot_data_model::copy_data_text(app.data_model().servo_calibration.source,
                                                    sizeof(app.data_model().servo_calibration.source),
-                                                   servo_opener.current_path());
+                                                   servo_serial);
             }
         });
     } else {
