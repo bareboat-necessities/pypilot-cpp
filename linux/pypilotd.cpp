@@ -1,8 +1,11 @@
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
+#include <dirent.h>
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #ifndef PYPILOT_SERVO_PROTOCOL_ENABLE_LINUX_SERIAL
 #define PYPILOT_SERVO_PROTOCOL_ENABLE_LINUX_SERIAL 1
@@ -14,7 +17,6 @@
 #include "pypilot_app.hpp"
 #include "pypilot_servo_backend.hpp"
 #include "pypilot_servo_discovery.hpp"
-#include "pypilotd_servo_config.hpp"
 
 static bool ensure_directory(const char* path) {
     if (!path || !*path) return false;
@@ -30,6 +32,86 @@ static bool apply_original_tcp_environment(pypilot_settings::SettingsManager& ru
     return runtime_settings.save_value("runtime.tcp.port", port, error, sizeof(error));
 }
 
+static std::string real_path(const char* path) {
+    if (!path) return std::string();
+    char resolved[512]{};
+    if (::realpath(path, resolved)) return std::string(resolved);
+    return std::string(path);
+}
+
+static bool candidate_blacklisted(const char* path, const pypilot_settings::PypilotServoSerialCandidateList<64>& blacklist) {
+    const std::string real = real_path(path);
+    for (size_t i = 0; i < blacklist.count(); ++i) {
+        if (real_path(blacklist.at(i).path) == real) return true;
+    }
+    return false;
+}
+
+static void add_candidate_if_allowed(pypilot::PypilotServoCandidateList<32>& out,
+                                     const char* path,
+                                     int baud,
+                                     bool preferred,
+                                     const pypilot_settings::PypilotServoSerialCandidateList<64>& blacklist) {
+    if (!path || !path[0] || candidate_blacklisted(path, blacklist)) return;
+    out.add(path, baud, preferred);
+}
+
+static void add_directory_candidates(pypilot::PypilotServoCandidateList<32>& out,
+                                     const char* directory,
+                                     const pypilot_settings::PypilotServoSerialCandidateList<64>& blacklist) {
+    DIR* dir = ::opendir(directory);
+    if (!dir) return;
+    while (dirent* ent = ::readdir(dir)) {
+        if (ent->d_name[0] == '.') continue;
+        std::string path = std::string(directory) + "/" + ent->d_name;
+        add_candidate_if_allowed(out, path.c_str(), 38400, false, blacklist);
+    }
+    ::closedir(dir);
+}
+
+static void add_dev_prefix_candidates(pypilot::PypilotServoCandidateList<32>& out,
+                                      const pypilot_settings::PypilotServoSerialCandidateList<64>& blacklist) {
+    DIR* dir = ::opendir("/dev");
+    if (!dir) return;
+    while (dirent* ent = ::readdir(dir)) {
+        const char* name = ent->d_name;
+        if (std::strncmp(name, "ttyUSB", 6) == 0 ||
+            std::strncmp(name, "ttyACM", 6) == 0 ||
+            std::strncmp(name, "ttyAMA", 6) == 0) {
+            std::string path = std::string("/dev/") + name;
+            add_candidate_if_allowed(out, path.c_str(), 38400, false, blacklist);
+        }
+    }
+    ::closedir(dir);
+}
+
+static void build_servo_candidates(const char* config_dir, pypilot::PypilotServoCandidateList<32>& out) {
+    out.clear();
+
+    pypilot_settings::PypilotServoSerialCandidateList<64> blacklist;
+    pypilot_settings::pypilot_load_blacklist_serial_ports_file(config_dir, blacklist);
+
+    pypilot_settings::PypilotServoSerialCandidateList<64> last;
+    pypilot_settings::pypilot_load_servo_device_file(config_dir, last);
+    for (size_t i = 0; i < last.count(); ++i) {
+        add_candidate_if_allowed(out, last.at(i).path, last.at(i).baud, true, blacklist);
+    }
+
+    pypilot_settings::PypilotServoSerialCandidateList<64> allowed;
+    const bool has_allowed = pypilot_settings::pypilot_load_serial_ports_file(config_dir, allowed);
+    const bool any = !has_allowed || allowed.count() == 0 ||
+                     (allowed.count() == 1 && std::strcmp(allowed.at(0).path, "any") == 0);
+    if (any) {
+        add_directory_candidates(out, "/dev/serial/by-id", blacklist);
+        add_directory_candidates(out, "/dev/serial/by-path", blacklist);
+        add_dev_prefix_candidates(out, blacklist);
+    } else {
+        for (size_t i = 0; i < allowed.count(); ++i) {
+            add_candidate_if_allowed(out, allowed.at(i).path, allowed.at(i).baud, false, blacklist);
+        }
+    }
+}
+
 class LinuxServoPortOpener final : public pypilot::IPypilotServoPortOpener {
 public:
     LinuxServoPortOpener(pypilot_servo_protocol::LinuxSerialTransport& transport, const char* config_dir)
@@ -42,12 +124,11 @@ public:
         if (!transport_.open_device(candidate.path, candidate.baud)) return false;
         current_path_ = candidate.path;
         current_baud_ = candidate.baud;
-        pypilotd_servo_config::save_last_working(config_dir_.c_str(), candidate);
+        pypilot_settings::pypilot_save_servo_device_file(config_dir_.c_str(), candidate.path, candidate.baud);
         return true;
     }
 
     const char* current_path() const { return current_path_.c_str(); }
-    int current_baud() const { return current_baud_; }
 
 private:
     pypilot_servo_protocol::LinuxSerialTransport& transport_;
@@ -103,7 +184,7 @@ int main(int, char**) {
 
     app.loop().on_repeat_us(1000000u, [&]() {
         const uint64_t now_us = app.loop().clock().micros();
-        pypilotd_servo_config::build_candidates(config_dir, servo_candidates);
+        build_servo_candidates(config_dir, servo_candidates);
         if (!servo_transport.is_open() && servo_discovery.ensure_open(servo_candidates.data(), servo_candidates.count(), now_us)) {
             servo_backend.reset_protocol();
             app.data_model().servo.has_controller = true;
