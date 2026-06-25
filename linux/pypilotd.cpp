@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cstdlib>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -12,6 +13,13 @@ static bool ensure_directory(const char* path) {
     struct stat st;
     if (::stat(path, &st) == 0) return S_ISDIR(st.st_mode);
     return ::mkdir(path, 0755) == 0;
+}
+
+static bool apply_original_tcp_environment(pypilot_settings::SettingsManager& runtime_settings) {
+    const char* port = std::getenv("PYPILOT_PORT");
+    if (!port || !*port) return true;
+    char error[160]{};
+    return runtime_settings.save_value("runtime.tcp.port", port, error, sizeof(error));
 }
 
 int main(int, char**) {
@@ -34,6 +42,10 @@ int main(int, char**) {
     pypilot_settings::PypilotConfigStore config_store(config_file);
     pypilot_settings::SettingsCatalog runtime_catalog = pypilot_runtime::PypilotRuntimeServiceSettings::catalog();
     pypilot_settings::SettingsManager runtime_settings(runtime_catalog, config_store);
+    if (!apply_original_tcp_environment(runtime_settings)) {
+        std::fprintf(stderr, "pypilotd: failed to apply PYPILOT_PORT\n");
+        return 1;
+    }
     if (!pypilot_runtime::PypilotRuntimeServiceSettings::apply_process_environment(runtime_settings)) {
         std::fprintf(stderr, "pypilotd: failed to apply runtime environment settings\n");
         return 1;
