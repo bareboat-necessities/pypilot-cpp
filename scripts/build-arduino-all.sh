@@ -71,4 +71,4 @@ arduino_compile "$M/pypilot-steering-signaling/examples/arduino/SteeringExample"
 
 arduino_compile_esp32 "$M/pypilot-mdns/examples/MdnsExample"
 arduino_compile_esp32 "$M/pypilot-runtime/examples/RuntimeServerExample"
-arduino_compile_esp32 "$ROOT/mcu/atomS3R"
+arduino_compile_esp32 "$ROOT/mcu/pypilot-atomS3R"
