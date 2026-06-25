@@ -32,7 +32,7 @@ static bool apply_original_tcp_environment(pypilot_settings::SettingsManager& ru
 }
 
 static bool open_servo_serial(pypilot_servo_protocol::LinuxSerialTransport& transport, const char* path) {
-    return path && path[0] && (transport.is_open() || transport.open_device(path, PYPILOT_SERVO_SERIAL_BAUD));
+    return path && path[0] && transport.open_device(path, PYPILOT_SERVO_SERIAL_BAUD);
 }
 
 int main(int, char**) {
@@ -83,7 +83,7 @@ int main(int, char**) {
 
     if (servo_configured) {
         app.loop().on_repeat_us(1000000u, [&]() {
-            if (open_servo_serial(servo_transport, servo_serial)) {
+            if (!servo_transport.is_open() && open_servo_serial(servo_transport, servo_serial)) {
                 servo_backend.reset_protocol();
                 app.data_model().servo.has_controller = true;
                 app.data_model().servo_telemetry.controller_state.value = pypilot_data_model::ServoControllerState::idle;
