@@ -3,7 +3,8 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 M="$ROOT/modules"
-FQBN="${PYPILOT_ARDUINO_FQBN:-arduino:avr:mega}"
+ARDUINO_FQBN="${PYPILOT_ARDUINO_FQBN:-arduino:avr:mega}"
+ESP32_FQBN="${PYPILOT_ESP32_FQBN:-esp32:esp32:esp32s3}"
 
 COMMON_LIBS=(
   --libraries "$M/pypilot-event-loop"
@@ -33,7 +34,7 @@ arduino_compile() {
   local sketch="$1"
   if [ -d "$sketch" ]; then
     echo "::group::Arduino compile $sketch"
-    arduino-cli compile --fqbn "$FQBN" "${COMMON_LIBS[@]}" "$sketch"
+    arduino-cli compile --fqbn "$ARDUINO_FQBN" "${COMMON_LIBS[@]}" "$sketch"
     echo "::endgroup::"
   else
     echo "Skipping missing Arduino sketch: $sketch"
@@ -44,7 +45,7 @@ arduino_compile_esp32() {
   local sketch="$1"
   if [ -d "$sketch" ]; then
     echo "::group::Arduino compile ESP32 $sketch"
-    arduino-cli compile --fqbn "$FQBN" "${ESP32_LIBS[@]}" "$sketch"
+    arduino-cli compile --fqbn "$ESP32_FQBN" "${ESP32_LIBS[@]}" "$sketch"
     echo "::endgroup::"
   else
     echo "Skipping missing Arduino sketch: $sketch"
@@ -68,12 +69,6 @@ arduino_compile "$M/pypilot-gps-adapter/examples/arduino/GpsAdapterExample"
 arduino_compile "$M/pypilot-pilots-logic/examples/arduino/PilotsLogicExample"
 arduino_compile "$M/pypilot-steering-signaling/examples/arduino/SteeringExample"
 
-if [[ "$FQBN" == esp32:* ]]; then
-  arduino_compile_esp32 "$M/pypilot-mdns/examples/MdnsExample"
-  arduino_compile_esp32 "$M/pypilot-runtime/examples/RuntimeServerExample"
-  arduino_compile_esp32 "$ROOT/mcu/atomS3R"
-else
-  echo "Skipping pypilot-mdns MdnsExample for non-ESP32 target: $FQBN"
-  echo "Skipping pypilot-runtime RuntimeServerExample for non-ESP32 target: $FQBN"
-  echo "Skipping pypilot-cpp AtomS3R sketch for non-ESP32 target: $FQBN"
-fi
+arduino_compile_esp32 "$M/pypilot-mdns/examples/MdnsExample"
+arduino_compile_esp32 "$M/pypilot-runtime/examples/RuntimeServerExample"
+arduino_compile_esp32 "$ROOT/mcu/atomS3R"
