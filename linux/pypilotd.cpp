@@ -3,10 +3,16 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#ifndef PYPILOT_SERVO_PROTOCOL_ENABLE_LINUX_SERIAL
+#define PYPILOT_SERVO_PROTOCOL_ENABLE_LINUX_SERIAL 1
+#endif
+
 #include <pypilot_settings.hpp>
+#include <pypilot_servo_protocol.hpp>
 
 #include "pypilot_app.hpp"
-#include "pypilot_linux_servo_backend.hpp"
+#include "pypilot_servo_backend.hpp"
+#include "pypilot_linux_servo_discovery.hpp"
 
 static bool ensure_directory(const char* path) {
     if (!path || !*path) return false;
@@ -51,7 +57,12 @@ int main(int, char**) {
         return 1;
     }
 
-    pypilot::PypilotLinuxServoBackend servo_backend(config_dir);
+    pypilot_servo_protocol::LinuxSerialTransport servo_transport;
+    pypilot::PypilotLinuxServoDiscovery servo_discovery(config_dir);
+    pypilot_steering_signaling::ServoRuntimeConfig servo_config;
+    servo_config.safety.enforce_rudder_limits = false;
+    pypilot::PypilotServoBackend servo_backend(servo_transport, servo_config);
+
     pypilot::PypilotApp app;
 
     if (!app.begin(nullptr, &servo_backend, nullptr, 0, nullptr, &runtime_settings)) {
@@ -59,6 +70,18 @@ int main(int, char**) {
         std::fflush(stderr);
         return 1;
     }
+
+    app.loop().on_repeat_us(1000000u, [&]() {
+        const uint64_t now_us = app.loop().clock().micros();
+        if (!servo_transport.is_open() && servo_discovery.ensure_open(servo_transport, now_us)) {
+            servo_backend.reset_protocol();
+            app.data_model().servo.has_controller = true;
+            app.data_model().servo_telemetry.controller_state.value = pypilot_data_model::ServoControllerState::idle;
+            pypilot_data_model::copy_data_text(app.data_model().servo_calibration.source,
+                                               sizeof(app.data_model().servo_calibration.source),
+                                               servo_discovery.current_device());
+        }
+    });
 
     std::fprintf(stderr,
                  "pypilotd: runtime server listening on port %u; config=%s; servo serial probing uses %s/{serial_ports,blacklist_serial_ports,servodevice}.\n",
