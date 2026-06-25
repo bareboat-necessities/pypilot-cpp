@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(PYPILOT_BUILD_LINUX_DAEMON "Build the Linux pypilotd entrypoint" ON)
 option(PYPILOT_BUILD_INTEGRATION_TESTS "Build/register pypilot-cpp integration tests" ON)
 set(PYPILOT_MODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/modules" CACHE PATH "Path to checked-out pypilot module repositories")
+set(PYPILOT_SETTINGS_DIR "${PYPILOT_MODULES_DIR}/pypilot-settings" CACHE PATH "Path to pypilot-settings checkout" FORCE)
 
 if(EXISTS "${PYPILOT_MODULES_DIR}/pypilot-runtime/CMakeLists.txt")
     add_subdirectory("${PYPILOT_MODULES_DIR}/pypilot-runtime" "${CMAKE_CURRENT_BINARY_DIR}/modules/pypilot-runtime")
