@@ -33,8 +33,11 @@ public:
           servo_runtime_(),
           open_(false),
           last_probe_us_(0),
-          packet_count_(0),
-          bad_packet_count_(0) {}
+          packet_count_(0) {
+        pypilot_steering_signaling::ServoRuntimeConfig config;
+        config.safety.enforce_rudder_limits = false;
+        servo_runtime_.set_config(config);
+    }
 
     void disable(PypilotDataModel& model, uint64_t now_us) override {
         poll_telemetry(model, now_us);
@@ -62,7 +65,7 @@ public:
 
         if (output.emit) {
             if (!transport_.write_bytes(output.protocol.raw_packet.bytes, sizeof(output.protocol.raw_packet.bytes))) {
-                close_device(model, now_us);
+                close_device(model);
                 return false;
             }
             model.servo_telemetry.last_command_us = now_us;
@@ -101,11 +104,6 @@ private:
             if (!line.empty()) lines.push_back(line);
         }
         return true;
-    }
-
-    static bool path_exists(const std::string& path) {
-        struct stat st;
-        return ::stat(path.c_str(), &st) == 0;
     }
 
     static std::string real_path(const std::string& path) {
@@ -245,8 +243,7 @@ private:
         return false;
     }
 
-    void close_device(PypilotDataModel& model, uint64_t now_us) {
-        (void)now_us;
+    void close_device(PypilotDataModel& model) {
         transport_.close_device();
         open_ = false;
         current_device_.clear();
@@ -348,7 +345,6 @@ private:
     std::string current_device_;
     int current_baud_ = 0;
     uint32_t packet_count_;
-    uint32_t bad_packet_count_;
 };
 
 } // namespace pypilot
