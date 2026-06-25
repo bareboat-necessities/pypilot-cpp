@@ -16,6 +16,10 @@
 #include <pypilot_event_loop.hpp>
 #include <pypilot_runtime.hpp>
 
+#if defined(PYPILOT_RUNTIME_WITH_SETTINGS)
+#include <pypilot_settings.hpp>
+#endif
+
 namespace pypilot {
 
 using PypilotEventLoop = pypilot_event_loop::EventLoop<128, 96>;
@@ -79,7 +83,11 @@ public:
                IServoBackend* servo_backend,
                IPypilotInputService* const* input_services = nullptr,
                size_t input_service_count = 0,
-               IPypilotControlService* control_service = nullptr);
+               IPypilotControlService* control_service = nullptr
+#if defined(PYPILOT_RUNTIME_WITH_SETTINGS)
+               , pypilot_settings::SettingsManager* runtime_settings = nullptr
+#endif
+               );
     void tick();
     void run_forever();
     void request_exit();
