@@ -15,6 +15,16 @@ else()
     message(FATAL_ERROR "pypilot-runtime checkout not found at ${PYPILOT_MODULES_DIR}/pypilot-runtime")
 endif()
 
+if(EXISTS "${PYPILOT_MODULES_DIR}/pypilot-steering-signaling/CMakeLists.txt")
+    set(PYPILOT_STEERING_SIGNALING_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(PYPILOT_STEERING_SIGNALING_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(PYPILOT_SERVO_PROTOCOL_DIR "${PYPILOT_MODULES_DIR}/pypilot-servo-protocol" CACHE PATH "" FORCE)
+    set(PYPILOT_SYSLIB_DIR "${PYPILOT_MODULES_DIR}/pypilot-syslib" CACHE PATH "" FORCE)
+    add_subdirectory("${PYPILOT_MODULES_DIR}/pypilot-steering-signaling" "${CMAKE_CURRENT_BINARY_DIR}/modules/pypilot-steering-signaling")
+else()
+    message(FATAL_ERROR "pypilot-steering-signaling checkout not found at ${PYPILOT_MODULES_DIR}/pypilot-steering-signaling")
+endif()
+
 add_library(pypilot_cpp_app
     src/pypilot_app.cpp)
 
@@ -24,7 +34,8 @@ target_include_directories(pypilot_cpp_app
 
 target_link_libraries(pypilot_cpp_app
     PUBLIC
-        pypilot_runtime)
+        pypilot_runtime
+        pypilot_steering_signaling)
 
 include(CTest)
 if(BUILD_TESTING)
