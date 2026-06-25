@@ -1,9 +1,14 @@
 #include <Arduino.h>
+#include <M5Unified.h>
 #include <pypilot_app.hpp>
 
 static pypilot::PypilotApp app;
 
 void setup() {
+    auto cfg = M5.config();
+    cfg.serial_baudrate = 115200;
+    M5.begin(cfg);
+
     Serial.begin(115200);
 
     if (!app.begin(nullptr, nullptr)) {
@@ -18,5 +23,6 @@ void setup() {
 }
 
 void loop() {
+    M5.update();
     app.tick();
 }
