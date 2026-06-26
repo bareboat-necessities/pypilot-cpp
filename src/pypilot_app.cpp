@@ -98,7 +98,7 @@ void PypilotApp::stop() {
     model_.servo.engaged.value = false;
     if (control_tick_handle_.assigned()) {
         loop_.remove(control_tick_handle_);
-        control_tick_handle_ = pypilot_event_loop::EventHandle{};
+        control_tick_handle_ = async_event_loop::EventHandle{};
     }
     stop_input_services();
     runtime_.stop();
