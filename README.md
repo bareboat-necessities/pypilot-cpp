@@ -136,26 +136,52 @@ The Arduino build script targets `arduino:avr:mega` by default because it is a b
 
 `ocean-imu` is not passed to `arduino-cli` by the umbrella Arduino build. ESP32-S3 sketches that use `ocean-imu` should include it explicitly when those integrations are added.
 
-## Dependency order
+## Dependency tree
 
 ```text
-pypilot-event-loop
-pypilot-settings
-pypilot-mdns
-pypilot-syslib
-pypilot-data-model
-pypilot-servo-protocol
-pypilot-client-protocol
-pypilot-runtime
-pypilot-algorithms
-pypilot-boatimu
-ocean-imu
-pypilot-nmea0183-connector
-pypilot-signalk-connector
-pypilot-sensors
-pypilot-gps-adapter
-pypilot-pilots-logic
-pypilot-steering-signaling
+pypilot-cpp
+├── pypilot-event-loop
+├── pypilot-data-model
+├── pypilot-runtime
+│   ├── pypilot-event-loop
+│   ├── pypilot-data-model
+│   ├── pypilot-settings
+│   ├── pypilot-mdns
+│   ├── pypilot-nmea0183-connector
+│   │   └── pypilot-data-model
+│   └── pypilot-signalk-connector
+│       ├── pypilot-data-model
+│       └── pypilot-mdns
+├── pypilot-sensors
+│   ├── pypilot-data-model
+│   ├── pypilot-algorithms
+│   ├── pypilot-syslib
+│   ├── pypilot-servo-protocol
+│   ├── pypilot-nmea0183-connector
+│   └── pypilot-signalk-connector
+├── pypilot-gps-adapter
+│   ├── pypilot-data-model
+│   └── pypilot-sensors
+├── pypilot-pilots-logic
+│   ├── pypilot-data-model
+│   └── pypilot-algorithms
+├── pypilot-steering-signaling
+│   ├── pypilot-data-model
+│   ├── pypilot-servo-protocol
+│   └── pypilot-syslib
+├── pypilot-boatimu
+│   ├── pypilot-data-model
+│   ├── pypilot-algorithms
+│   └── ocean-imu
+├── pypilot-settings
+├── pypilot-mdns
+├── pypilot-syslib
+├── pypilot-servo-protocol
+├── pypilot-client-protocol
+├── pypilot-algorithms
+├── pypilot-nmea0183-connector
+├── pypilot-signalk-connector
+└── ocean-imu
 ```
 
 `pypilot-runtime` optionally consumes `pypilot-settings` and `pypilot-mdns` when those sibling checkouts are present. `pypilot-signalk-connector` depends on `pypilot-mdns` for Signal K discovery. `ocean-imu` is a checkout-only dependency for future BoatIMU/AHRS integration and is not part of the current umbrella build graph.
