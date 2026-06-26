@@ -138,34 +138,50 @@ The Arduino build script targets `arduino:avr:mega` by default because it is a b
 
 ## Dependency tree
 
-This is a deduplicated dependency-layer tree. Each module appears exactly once; shared lower-level dependencies are not repeated under every consumer.
+This tree contains only actual module repository names. Each module appears exactly once. The module graph has shared dependencies, so non-tree shared edges are listed after the tree instead of duplicating nodes.
 
 ```text
 pypilot-cpp
-├── application/runtime layer
-│   ├── pypilot-runtime
-│   ├── pypilot-sensors
-│   ├── pypilot-gps-adapter
-│   ├── pypilot-pilots-logic
-│   └── pypilot-steering-signaling
-├── sensor, navigation, and IMU layer
-│   ├── pypilot-boatimu
-│   └── ocean-imu
-├── protocol and connector layer
-│   ├── pypilot-client-protocol
-│   ├── pypilot-servo-protocol
+├── pypilot-runtime
+│   ├── pypilot-event-loop
+│   ├── pypilot-settings
+│   ├── pypilot-mdns
 │   ├── pypilot-nmea0183-connector
 │   └── pypilot-signalk-connector
-└── platform, data, and support layer
-    ├── pypilot-event-loop
-    ├── pypilot-settings
-    ├── pypilot-mdns
-    ├── pypilot-syslib
-    ├── pypilot-data-model
-    └── pypilot-algorithms
+├── pypilot-sensors
+│   ├── pypilot-syslib
+│   └── pypilot-servo-protocol
+├── pypilot-gps-adapter
+├── pypilot-pilots-logic
+├── pypilot-steering-signaling
+├── pypilot-boatimu
+│   └── ocean-imu
+├── pypilot-data-model
+├── pypilot-algorithms
+└── pypilot-client-protocol
 ```
 
-Important cross-dependencies are intentionally described here instead of duplicating nodes in the tree: `pypilot-runtime` uses the event loop, data model, settings, mDNS, NMEA 0183 connector, and Signal K connector; `pypilot-sensors` uses the data model, algorithms, syslib, servo protocol, NMEA 0183 connector, and Signal K connector; `pypilot-gps-adapter` feeds the sensors/data-model path; `pypilot-pilots-logic` uses the data model and algorithms; `pypilot-steering-signaling` uses the data model, servo protocol, and syslib; `pypilot-boatimu` uses the data model, algorithms, and `ocean-imu`.
+Additional shared dependency edges that are not expanded in the tree:
+
+```text
+pypilot-runtime -> pypilot-data-model
+pypilot-sensors -> pypilot-data-model
+pypilot-sensors -> pypilot-algorithms
+pypilot-sensors -> pypilot-nmea0183-connector
+pypilot-sensors -> pypilot-signalk-connector
+pypilot-gps-adapter -> pypilot-data-model
+pypilot-gps-adapter -> pypilot-sensors
+pypilot-pilots-logic -> pypilot-data-model
+pypilot-pilots-logic -> pypilot-algorithms
+pypilot-steering-signaling -> pypilot-data-model
+pypilot-steering-signaling -> pypilot-servo-protocol
+pypilot-steering-signaling -> pypilot-syslib
+pypilot-boatimu -> pypilot-data-model
+pypilot-boatimu -> pypilot-algorithms
+pypilot-nmea0183-connector -> pypilot-data-model
+pypilot-signalk-connector -> pypilot-data-model
+pypilot-signalk-connector -> pypilot-mdns
+```
 
 `pypilot-runtime` optionally consumes `pypilot-settings` and `pypilot-mdns` when those sibling checkouts are present. `pypilot-signalk-connector` depends on `pypilot-mdns` for Signal K discovery. `ocean-imu` is a checkout-only dependency for future BoatIMU/AHRS integration and is not part of the current umbrella build graph.
 
