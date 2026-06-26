@@ -4,16 +4,16 @@
 #include <stdint.h>
 
 #if defined(ARDUINO) && defined(ESP32)
-#ifndef PYPILOT_EVENT_LOOP_ENABLE_ARDUINO_WIFI_TCP
-#define PYPILOT_EVENT_LOOP_ENABLE_ARDUINO_WIFI_TCP 1
+#ifndef ASYNC_EVENT_LOOP_ENABLE_ARDUINO_WIFI_TCP
+#define ASYNC_EVENT_LOOP_ENABLE_ARDUINO_WIFI_TCP 1
 #endif
-#ifndef PYPILOT_EVENT_LOOP_ENABLE_ARDUINO_WIFI_UDP
-#define PYPILOT_EVENT_LOOP_ENABLE_ARDUINO_WIFI_UDP 1
+#ifndef ASYNC_EVENT_LOOP_ENABLE_ARDUINO_WIFI_UDP
+#define ASYNC_EVENT_LOOP_ENABLE_ARDUINO_WIFI_UDP 1
 #endif
 #endif
 
-#include <pypilot_data_model.hpp>
-#include <pypilot_event_loop.hpp>
+#include <ship_data_model.hpp>
+#include <async_event_loop.hpp>
 #include <pypilot_runtime.hpp>
 
 #if defined(PYPILOT_RUNTIME_WITH_SETTINGS)
@@ -22,9 +22,9 @@
 
 namespace pypilot {
 
-using PypilotEventLoop = pypilot_event_loop::EventLoop<128, 96>;
+using PypilotEventLoop = async_event_loop::EventLoop<128, 96>;
 using PypilotRuntimeService = pypilot_runtime::PypilotRuntimeService<PypilotEventLoop, 8, 16>;
-using PypilotDataModel = pypilot_data_model::DataModel<float>;
+using PypilotDataModel = ship_data_model::DataModel<float>;
 
 class IPypilotInputService {
 public:
@@ -118,7 +118,7 @@ private:
     size_t input_service_count_;
     IPypilotControlService* control_service_;
     PypilotAppStatus status_;
-    pypilot_event_loop::EventHandle control_tick_handle_;
+    async_event_loop::EventHandle control_tick_handle_;
 };
 
 } // namespace pypilot
