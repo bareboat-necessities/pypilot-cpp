@@ -27,6 +27,7 @@ jobs:
   release-all:
     runs-on: ubuntu-latest
     env:
+      CURRENT_REPO_TOKEN: ${{ github.token }}
       RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       VERSION: ${{ github.event.inputs.version || '0.0.5' }}
       DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
@@ -35,7 +36,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${RELEASE_TOKEN:-}" ]; then
-            echo "::error::Set a RELEASE_TOKEN secret with contents:write access to pypilot-cpp and every submodule repository. The default GITHUB_TOKEN is repo-scoped and cannot release the submodules."
+            echo "::error::Set a RELEASE_TOKEN secret with contents:write access to every submodule repository."
             exit 1
           fi
 
@@ -70,8 +71,6 @@ jobs:
           cat release-targets.tsv
 
       - name: Create tags and releases
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
           set -euo pipefail
           version="${VERSION}"
@@ -84,21 +83,26 @@ jobs:
               continue
             fi
 
-            remote="https://x-access-token:${RELEASE_TOKEN}@github.com/${repo}.git"
-            existing_tag_sha="$(git ls-remote --tags "${remote}" "refs/tags/${tag}" | awk '{print $1}')"
+            if [ "${repo}" = "${GITHUB_REPOSITORY}" ]; then
+              repo_token="${CURRENT_REPO_TOKEN}"
+            else
+              repo_token="${RELEASE_TOKEN}"
+            fi
+
+            existing_tag_sha="$(git ls-remote --tags "https://github.com/${repo}.git" "refs/tags/${tag}" | awk '{print $1}')"
             if [ -n "${existing_tag_sha}" ] && [ "${existing_tag_sha}" != "${sha}" ]; then
               echo "::error::${repo} already has ${tag} at ${existing_tag_sha}, expected ${sha}. Refusing to move an existing release tag."
               exit 1
             fi
 
-            if gh release view "${tag}" --repo "${repo}" >/dev/null 2>&1; then
+            if GH_TOKEN="${repo_token}" gh release view "${tag}" --repo "${repo}" >/dev/null 2>&1; then
               echo "Release already exists for ${repo} ${tag}; leaving it unchanged."
               continue
             fi
 
             printf 'Release %s\n\nTarget commit: %s\n' "${version}" "${sha}" > "${notes_file}"
 
-            gh release create "${tag}" \
+            GH_TOKEN="${repo_token}" gh release create "${tag}" \
               --repo "${repo}" \
               --target "${sha}" \
               --title "${version}" \
