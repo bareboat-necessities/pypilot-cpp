@@ -1,6 +1,6 @@
 name: Release all modules
 
-# Manual retrigger for v0.0.5 release workflow.
+# Manual or scheduled v0.0.5 release workflow.
 
 on:
   workflow_dispatch:
@@ -17,11 +17,8 @@ on:
         options:
           - "false"
           - "true"
-  push:
-    branches:
-      - main
-    paths:
-      - .github/workflows/release-all.yml
+  schedule:
+    - cron: '*/5 * * * *'
 
 permissions:
   contents: write
