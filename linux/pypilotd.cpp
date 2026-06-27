@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 #ifndef PYPILOT_SERVO_PROTOCOL_ENABLE_LINUX_SERIAL
 #define PYPILOT_SERVO_PROTOCOL_ENABLE_LINUX_SERIAL 1
@@ -42,10 +43,11 @@ int main(int, char**) {
 
     if (servo_configured) {
         app.data_model().servo.has_controller = true;
-        app.data_model().servo_telemetry.controller_state.value = pypilot_data_model::ServoControllerState::idle;
-        pypilot_data_model::copy_data_text(app.data_model().servo_calibration.source,
-                                           sizeof(app.data_model().servo_calibration.source),
-                                           servo_serial);
+        app.data_model().servo_telemetry.controller_state.value = ship_data_model::ServoControllerState::idle;
+        std::strncpy(app.data_model().servo_calibration.source,
+                     servo_serial,
+                     sizeof(app.data_model().servo_calibration.source) - 1);
+        app.data_model().servo_calibration.source[sizeof(app.data_model().servo_calibration.source) - 1] = '\0';
     }
 
     std::fprintf(stderr,
