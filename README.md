@@ -2,7 +2,7 @@
 
 Umbrella repository and top-level C++ pypilot application/daemon module.
 
-This repository owns the common application composition root in `src/`, a short Linux daemon entrypoint in `linux/`, and short MCU-specific Arduino sketches under `mcu/`. The common app composes a `pypilot-event-loop` event loop with the `pypilot-runtime` service facade and a shared `pypilot-data-model` state. Runtime values, TCP handling, watches, settings, and value publication remain the responsibility of `pypilot-runtime`. Connector/input services register event-loop callbacks and update the shared data model from their own protocol handlers; the periodic app control task reads that latest model state and drives control/servo output.
+This repository owns the common application composition root in `src/`, a short Linux daemon entrypoint in `linux/`, and short MCU-specific Arduino sketches under `mcu`. The common app composes a `pypilot-event-loop` event loop with the `pypilot-runtime` service facade and a shared `pypilot-data-model` state. Runtime values, TCP handling, watches, settings, and value publication remain the responsibility of `pypilot-runtime`. Connector/input services register event-loop callbacks and update the shared data model from their own protocol handlers; the periodic app control task reads that latest model state and drives control/servo output.
 
 The reusable library code still lives in the separate `modules/` repositories and is pulled together here for checkout, documentation, CI, and cross-module build validation.
 
@@ -136,54 +136,57 @@ The Arduino build script targets `arduino:avr:mega` by default because it is a b
 
 `ocean-imu` is not passed to `arduino-cli` by the umbrella Arduino build. ESP32-S3 sketches that use `ocean-imu` should include it explicitly when those integrations are added.
 
-## Dependency tree
+## Dependency graph
 
-This tree contains only actual module repository names. Each module appears exactly once. The module graph has shared dependencies, so non-tree shared edges are listed after the tree instead of duplicating nodes.
-
-```text
-pypilot-cpp
-├── pypilot-runtime
-│   ├── pypilot-event-loop
-│   ├── pypilot-settings
-│   ├── pypilot-mdns
-│   ├── pypilot-nmea0183-connector
-│   └── pypilot-signalk-connector
-├── pypilot-sensors
-│   ├── pypilot-syslib
-│   └── pypilot-servo-protocol
-├── pypilot-gps-adapter
-├── pypilot-pilots-logic
-├── pypilot-steering-signaling
-├── pypilot-boatimu
-│   └── ocean-imu
-├── pypilot-data-model
-├── pypilot-algorithms
-└── pypilot-client-protocol
-```
-
-Additional shared dependency edges that are not expanded in the tree:
+The module graph is a DAG, not a tree, because several modules share the same dependencies. The list below is derived from the current CMake wiring. Edge direction is `consumer -> dependency`.
 
 ```text
+pypilot-cpp -> pypilot-runtime
+pypilot-cpp -> pypilot-steering-signaling
+
+pypilot-runtime -> pypilot-event-loop
+pypilot-runtime -> pypilot-settings
+pypilot-runtime -> pypilot-mdns
+pypilot-runtime -> pypilot-nmea0183-connector
+pypilot-runtime -> pypilot-signalk-connector
 pypilot-runtime -> pypilot-data-model
+
 pypilot-sensors -> pypilot-data-model
 pypilot-sensors -> pypilot-algorithms
 pypilot-sensors -> pypilot-nmea0183-connector
 pypilot-sensors -> pypilot-signalk-connector
+pypilot-sensors -> pypilot-mdns
+pypilot-sensors -> pypilot-servo-protocol
+pypilot-sensors -> pypilot-syslib
+
 pypilot-gps-adapter -> pypilot-data-model
+pypilot-gps-adapter -> pypilot-algorithms
 pypilot-gps-adapter -> pypilot-sensors
+pypilot-gps-adapter -> pypilot-syslib
+
 pypilot-pilots-logic -> pypilot-data-model
 pypilot-pilots-logic -> pypilot-algorithms
-pypilot-steering-signaling -> pypilot-data-model
+pypilot-pilots-logic -> pypilot-servo-protocol
+pypilot-pilots-logic -> pypilot-syslib
+
 pypilot-steering-signaling -> pypilot-servo-protocol
 pypilot-steering-signaling -> pypilot-syslib
+
 pypilot-boatimu -> pypilot-data-model
-pypilot-boatimu -> pypilot-algorithms
+pypilot-algorithms -> pypilot-syslib
 pypilot-nmea0183-connector -> pypilot-data-model
 pypilot-signalk-connector -> pypilot-data-model
 pypilot-signalk-connector -> pypilot-mdns
 ```
 
-`pypilot-runtime` optionally consumes `pypilot-settings` and `pypilot-mdns` when those sibling checkouts are present. `pypilot-signalk-connector` depends on `pypilot-mdns` for Signal K discovery. `ocean-imu` is a checkout-only dependency for future BoatIMU/AHRS integration and is not part of the current umbrella build graph.
+Standalone or checkout-only modules with no current module edge in this umbrella CMake graph:
+
+```text
+pypilot-client-protocol
+ocean-imu
+```
+
+`pypilot-signalk-connector` links `pypilot-mdns` when mDNS support is available. `pypilot-boatimu` consumes `pypilot-data-model` when that sibling checkout is present. `ocean-imu` is a checkout-only module for future BoatIMU/AHRS integration and is not part of the current umbrella CMake build graph.
 
 ## Current project status
 
