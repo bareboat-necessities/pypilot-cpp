@@ -138,7 +138,11 @@ The Arduino build script targets `arduino:avr:mega` by default because it is a b
 
 ## Dependency graph
 
-The module graph is a DAG, not a tree, because several modules share the same dependencies. The list below is derived from the current CMake wiring. Edge direction is `consumer -> dependency`.
+The module graph is a DAG, not a tree, because several modules share the same dependencies. The diagram below is derived from the current CMake wiring. Edge direction is `consumer -> dependency`.
+
+![pypilot-cpp module dependency DAG](docs/dependency-dag.svg)
+
+For copy/paste or grep-friendly review, the same edges are listed explicitly:
 
 ```text
 pypilot-cpp -> pypilot-runtime
