@@ -60,6 +60,10 @@ jobs:
             repo="${url#https://github.com/}"
             repo="${repo#git@github.com:}"
             repo="${repo%.git}"
+            if [ "${repo}" = "bareboat-necessities/ocean-imu" ]; then
+              echo "Skipping ${repo} release target"
+              continue
+            fi
             sha="$(git ls-tree HEAD "${path}" | awk '{print $3}')"
             if [ -z "${sha}" ]; then
               echo "::error::Could not resolve gitlink SHA for ${path}"
@@ -89,15 +93,15 @@ jobs:
               repo_token="${RELEASE_TOKEN}"
             fi
 
+            if GH_TOKEN="${repo_token}" gh release view "${tag}" --repo "${repo}" >/dev/null 2>&1; then
+              echo "Release already exists for ${repo} ${tag}; leaving it unchanged."
+              continue
+            fi
+
             existing_tag_sha="$(git ls-remote --tags "https://github.com/${repo}.git" "refs/tags/${tag}" | awk '{print $1}')"
             if [ -n "${existing_tag_sha}" ] && [ "${existing_tag_sha}" != "${sha}" ]; then
               echo "::error::${repo} already has ${tag} at ${existing_tag_sha}, expected ${sha}. Refusing to move an existing release tag."
               exit 1
-            fi
-
-            if GH_TOKEN="${repo_token}" gh release view "${tag}" --repo "${repo}" >/dev/null 2>&1; then
-              echo "Release already exists for ${repo} ${tag}; leaving it unchanged."
-              continue
             fi
 
             printf 'Release %s\n\nTarget commit: %s\n' "${version}" "${sha}" > "${notes_file}"
