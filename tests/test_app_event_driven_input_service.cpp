@@ -21,7 +21,7 @@ public:
             const uint64_t now_us = loop.clock().micros();
             model.navigation.gps.speed_kn.set(6.5f, now_us);
             model.navigation.gps.track_deg.set(123.0f, now_us);
-            model.navigation.gps.source.value = pypilot_data_model::SensorSource::serial;
+            model.navigation.gps.source.value = ship_data_model::SensorSource::serial;
             model.navigation.gps.last_update_us = now_us;
             fired_ = true;
         });
@@ -37,7 +37,7 @@ public:
     bool fired() const { return fired_; }
 
 private:
-    pypilot_event_loop::EventHandle handle_{};
+    async_event_loop::EventHandle handle_{};
     bool fired_ = false;
 };
 
