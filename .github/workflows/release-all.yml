@@ -1,0 +1,111 @@
+name: Release all modules
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version without leading v
+        required: true
+        default: 0.0.5
+      dry_run:
+        description: Print planned releases without creating tags/releases
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/release-all.yml
+
+permissions:
+  contents: write
+
+jobs:
+  release-all:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      VERSION: ${{ github.event.inputs.version || '0.0.5' }}
+      DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+    steps:
+      - name: Check token
+        run: |
+          set -euo pipefail
+          if [ -z "${RELEASE_TOKEN:-}" ]; then
+            echo "::error::Set a RELEASE_TOKEN secret with contents:write access to pypilot-cpp and every submodule repository. The default GITHUB_TOKEN is repo-scoped and cannot release the submodules."
+            exit 1
+          fi
+
+      - name: Check out superproject
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build release target list
+        run: |
+          set -euo pipefail
+          tag="v${VERSION}"
+          : > release-targets.tsv
+
+          printf '%s\t%s\t%s\n' "bareboat-necessities/pypilot-cpp" "${GITHUB_SHA}" "${tag}" >> release-targets.tsv
+
+          git config --file .gitmodules --get-regexp '^submodule\..*\.path$' | while read -r key path; do
+            name="${key#submodule.}"
+            name="${name%.path}"
+            url="$(git config --file .gitmodules --get "submodule.${name}.url")"
+            repo="${url#https://github.com/}"
+            repo="${repo#git@github.com:}"
+            repo="${repo%.git}"
+            sha="$(git ls-tree HEAD "${path}" | awk '{print $3}')"
+            if [ -z "${sha}" ]; then
+              echo "::error::Could not resolve gitlink SHA for ${path}"
+              exit 1
+            fi
+            printf '%s\t%s\t%s\n' "${repo}" "${sha}" "${tag}" >> release-targets.tsv
+          done
+
+          cat release-targets.tsv
+
+      - name: Create tags and releases
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${VERSION}"
+          notes_file="release-notes.md"
+
+          while IFS=$'\t' read -r repo sha tag; do
+            echo "==> ${repo} ${tag} ${sha}"
+
+            if [ "${DRY_RUN}" = "true" ]; then
+              continue
+            fi
+
+            remote="https://x-access-token:${RELEASE_TOKEN}@github.com/${repo}.git"
+            existing_tag_sha="$(git ls-remote --tags "${remote}" "refs/tags/${tag}" | awk '{print $1}')"
+            if [ -n "${existing_tag_sha}" ] && [ "${existing_tag_sha}" != "${sha}" ]; then
+              echo "::error::${repo} already has ${tag} at ${existing_tag_sha}, expected ${sha}. Refusing to move an existing release tag."
+              exit 1
+            fi
+
+            if gh release view "${tag}" --repo "${repo}" >/dev/null 2>&1; then
+              echo "Release already exists for ${repo} ${tag}; leaving it unchanged."
+              continue
+            fi
+
+            cat > "${notes_file}" <<EOF
+Release ${version}
+
+Target commit: ${sha}
+EOF
+
+            gh release create "${tag}" \
+              --repo "${repo}" \
+              --target "${sha}" \
+              --title "${version}" \
+              --notes-file "${notes_file}"
+          done < release-targets.tsv
