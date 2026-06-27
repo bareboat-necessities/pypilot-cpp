@@ -45,7 +45,7 @@ public:
         host_.neutral();
         host_.disengage();
         model.servo.engaged.value = false;
-        model.servo_telemetry.controller_state.value = pypilot_data_model::ServoControllerState::idle;
+        model.servo_telemetry.controller_state.value = ship_data_model::ServoControllerState::idle;
     }
 
     bool apply(PypilotDataModel& model, uint64_t now_us) override {
@@ -59,18 +59,17 @@ public:
         if (output.emit) {
             if (!transport_.write_bytes(output.protocol.raw_packet.bytes, sizeof(output.protocol.raw_packet.bytes))) {
                 model.servo.engaged.value = false;
-                model.servo_telemetry.controller_state.value = pypilot_data_model::ServoControllerState::disconnected;
+                model.servo_telemetry.controller_state.value = ship_data_model::ServoControllerState::disconnected;
                 return false;
             }
-            model.servo_telemetry.last_command_us = now_us;
             model.servo_telemetry.command_norm.set(command.value, now_us);
             model.servo_telemetry.raw_command_norm.set(output.protocol.allowed ? command.value : 0.0f, now_us);
         }
 
         model.servo.engaged.value = true;
-        if (model.servo_telemetry.controller_state.value == pypilot_data_model::ServoControllerState::unknown ||
-            model.servo_telemetry.controller_state.value == pypilot_data_model::ServoControllerState::disconnected) {
-            model.servo_telemetry.controller_state.value = pypilot_data_model::ServoControllerState::moving;
+        if (model.servo_telemetry.controller_state.value == ship_data_model::ServoControllerState::disconnected ||
+            model.servo_telemetry.controller_state.value == ship_data_model::ServoControllerState::idle) {
+            model.servo_telemetry.controller_state.value = ship_data_model::ServoControllerState::engaged;
         }
         return true;
     }
@@ -86,7 +85,6 @@ public:
 
         model.servo.has_controller = true;
         model.servo_telemetry.packet_count.set(packet_count_, now_us);
-        model.servo_telemetry.last_telemetry_us = now_us;
         servo_runtime_.update_feedback(telemetry_, now_us);
 
         if (telemetry_.has_current) {
@@ -107,23 +105,26 @@ public:
         }
         if (telemetry_.has_flags) {
             model.servo.flags.value = telemetry_.flags;
-            model.servo_telemetry.flags.value = telemetry_.flags;
+            model.servo_telemetry.flags.set(telemetry_.flags, now_us);
             model.servo.engaged.value = telemetry_.engaged();
             model.servo_telemetry.controller_state.value = telemetry_.faulted()
-                ? pypilot_data_model::ServoControllerState::fault
-                : telemetry_.engaged() ? pypilot_data_model::ServoControllerState::engaged
-                                       : pypilot_data_model::ServoControllerState::idle;
+                ? ship_data_model::ServoControllerState::fault
+                : telemetry_.engaged() ? ship_data_model::ServoControllerState::engaged
+                                       : ship_data_model::ServoControllerState::idle;
         }
         if (telemetry_.has_rudder && telemetry_.rudder_valid) {
             const float range = model.rudder.range_deg.value != 0.0f ? model.rudder.range_deg.value : 45.0f;
             const float angle = telemetry_.rudder * 2.0f * range;
             model.rudder.angle_deg.set(angle, now_us);
-            model.servo.position_deg.set(angle, now_us);
+            model.servo.rudder_position_deg.set(angle, now_us);
+            model.servo_telemetry.position_deg.set(angle, now_us);
             model.servo_telemetry.rudder_feedback_deg.set(angle, now_us);
         }
         if (telemetry_.has_flags && telemetry_.faulted()) {
-            ++model.servo.faults.value;
-            ++model.servo_telemetry.faults.value;
+            const uint32_t errors = model.servo_telemetry.error_count.valid
+                ? model.servo_telemetry.error_count.value
+                : 0u;
+            model.servo_telemetry.error_count.set(errors + 1u, now_us);
         }
     }
 
@@ -155,8 +156,8 @@ private:
         if (model.rudder.angle_deg.valid) {
             return pypilot_steering_signaling::RudderAngle(model.rudder.angle_deg.value, model.rudder.angle_deg.last_update_us, true);
         }
-        if (model.servo.position_deg.valid) {
-            return pypilot_steering_signaling::RudderAngle(model.servo.position_deg.value, model.servo.position_deg.last_update_us, true);
+        if (model.servo.rudder_position_deg.valid) {
+            return pypilot_steering_signaling::RudderAngle(model.servo.rudder_position_deg.value, model.servo.rudder_position_deg.last_update_us, true);
         }
         return pypilot_steering_signaling::RudderAngle(0.0f, now_us, false);
     }
