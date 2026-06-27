@@ -96,11 +96,7 @@ jobs:
               continue
             fi
 
-            cat > "${notes_file}" <<EOF
-Release ${version}
-
-Target commit: ${sha}
-EOF
+            printf 'Release %s\n\nTarget commit: %s\n' "${version}" "${sha}" > "${notes_file}"
 
             gh release create "${tag}" \
               --repo "${repo}" \
