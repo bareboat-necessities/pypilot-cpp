@@ -1,0 +1,50 @@
+name: Dispatch release-all from issue
+
+on:
+  issues:
+    types:
+      - opened
+      - edited
+      - reopened
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch-release:
+    if: >-
+      ${{ startsWith(github.event.issue.title, 'release-all v') &&
+          (github.event.issue.author_association == 'OWNER' ||
+           github.event.issue.author_association == 'MEMBER' ||
+           github.event.issue.author_association == 'COLLABORATOR') }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      ISSUE_TITLE: ${{ github.event.issue.title }}
+    steps:
+      - name: Resolve version
+        run: |
+          set -euo pipefail
+          if [[ "${ISSUE_TITLE}" =~ ^release-all[[:space:]]+v?([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "VERSION=${BASH_REMATCH[1]}" >> "${GITHUB_ENV}"
+          else
+            echo "::error::Issue title must be exactly: release-all vX.Y.Z"
+            exit 1
+          fi
+
+      - name: Check token
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::Set RELEASE_TOKEN with Actions read/write and Contents read/write permissions for pypilot-cpp, plus Contents read/write for all release target repos."
+            exit 1
+          fi
+
+      - name: Dispatch release workflow
+        run: |
+          set -euo pipefail
+          gh workflow run release-all.yml \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref main \
+            -f version="${VERSION}" \
+            -f dry_run=false
